@@ -24,15 +24,8 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode, roles?
   
   if (!token) return <Navigate to="/login" replace />;
 
-  // Force onboarding if:
-  // 1. User does not have a company_id yet
-  // 2. AND (Backend flag onboarding is true OR Role is candidate OR Recruiter has no companies array)
-  // Re-evaluating needsOnboarding with full documentation logic for robustness
-  const isCandidate = (user?.role as string) === 'candidate';
-  const noCompany = !user?.company_id && (!user?.companies || user.companies.length === 0);
-  const needsConnections = user?.onboarding === true;
-
-  const needsOnboarding = needsConnections || isCandidate || noCompany;
+  // Force onboarding ONLY if user has no company_id
+  const needsOnboarding = !user?.company_id;
 
   // Allow access to /onboarding itself if onboarding is needed
   if (needsOnboarding && window.location.pathname !== '/onboarding') {

@@ -28,24 +28,14 @@ export default function AuthCallback() {
                 return;
             }
 
-            // 0. If company_id already exists, they are done with onboarding
+            // 0. If company_id already exists, they are done with onboarding (Master Toggle)
             if (user.company_id) {
                 navigate('/');
                 return;
             }
 
-            // 1. NEW: Respect the onboarding flag from documentation
-            // onboarding: true means GitHub/LinkedIn accounts are not fully linked
-            if (user.onboarding === true) {
-                navigate('/onboarding');
-                return;
-            }
-
-            // 2. Force onboarding if candidate (to upgrade) or if recruiter has no company
-            if ((user.role as string) === 'candidate' || (user.role === 'recruiter' && (!user.companies || user.companies.length === 0))) {
-                navigate('/onboarding');
-                return;
-            }
+            // Otherwise, send to onboarding
+            navigate('/onboarding');
 
         } catch (err) {
             console.error("Failed to check onboarding status", err);

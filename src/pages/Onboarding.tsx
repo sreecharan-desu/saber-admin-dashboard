@@ -11,25 +11,12 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>('recruiter-company');
   const [loading, setLoading] = useState(false);
 
-  // Auto-upgrade if candidate
-    useEffect(() => {
-      
-        if(user?.company_id){
-            //forcefully navigate to dashboard 
-            window.location.href = '/dashboard';
-        }
-    const checkUpgrade = async () => {
-      if ((user?.role as string) === 'candidate') {
-        try {
-          await api.put('/user/role', { role: 'recruiter' });
-          await refreshUser();
-        } catch (err) {
-          console.error("Auto-upgrade failed", err);
-        }
-      }
-    };
-    checkUpgrade();
-  }, [user, refreshUser]);
+  // Redirect if company exists
+  useEffect(() => {
+    if (user?.company_id) {
+      window.location.href = '/';
+    }
+  }, [user]);
 
   // Form States
   const [companyData, setCompanyData] = useState({ name: '', website: '' });
