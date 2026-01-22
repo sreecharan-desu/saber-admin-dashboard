@@ -15,7 +15,7 @@ export default function RecruiterFeed() {
 
   const fetchFeed = async () => {
     try {
-      const res = await api.get('/recruiter/feed');
+      const res = await api.get('/recruiter/recruiter/feed');
       // Fix: API returns { candidates: [...] } or just array? 
       // Based on docs: { candidates: [...] }
       setCandidates(res.data.candidates || []);
@@ -34,7 +34,7 @@ export default function RecruiterFeed() {
     setCandidates(prev => prev.slice(1));
 
     try {
-      await api.post('/recruiter/swipe', {
+      await api.post('/recruiter/recruiter/swipe', {
         job_id: current.relevant_job_id,
         target_user_id: current.candidate_id,
         direction

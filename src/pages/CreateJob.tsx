@@ -34,7 +34,13 @@ export default function CreateJob() {
   });
 
   useEffect(() => {
-    // 1. Try to get company from user context
+    // 1. Try to get company from user context (new direct field)
+    if (user?.company_id) {
+      setCompanyId(user.company_id);
+      return;
+    }
+
+    // 2. Fallback to companies array
     if (user?.companies && user.companies.length > 0) {
       setCompanyId(user.companies[0].id);
       return;
@@ -116,7 +122,7 @@ export default function CreateJob() {
         }
       };
 
-      await api.post('/job', payload);
+      await api.post('/recruiters/job', payload);
       navigate('/'); // Back to dashboard
     } catch (err) {
       const errorMsg = (err as ApiError).response?.data?.error || "Failed to post job";
@@ -186,6 +192,31 @@ export default function CreateJob() {
                             onChange={e => setFormData({...formData, expectations: e.target.value})}
                             required
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Non-Negotiables</label>
+                            <textarea
+                                rows={3}
+                                className="input-base min-h-[100px] py-3 text-balance leading-relaxed"
+                                placeholder="Mandatory requirements..."
+                                value={formData.non_negotiables}
+                                onChange={e => setFormData({...formData, non_negotiables: e.target.value})}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Deal-Breakers</label>
+                            <textarea
+                                rows={3}
+                                className="input-base min-h-[100px] py-3 text-balance leading-relaxed"
+                                placeholder="What would cause immediate disqualification?"
+                                value={formData.deal_breakers}
+                                onChange={e => setFormData({...formData, deal_breakers: e.target.value})}
+                                required
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

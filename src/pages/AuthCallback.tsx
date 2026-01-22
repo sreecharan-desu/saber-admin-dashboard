@@ -28,21 +28,23 @@ export default function AuthCallback() {
                 return;
             }
 
-            // Check for Incomplete Profile
-            // Candidates need intent_text
-            // Recruiters need a company? (Actually recruiter conversion happens in onboarding, so if role is 'candidate' and no intent, go to onboarding)
-            
-            // Logic: 
-            // 1. If role is candidate and NO intent_text -> Onboarding (Screen 1 & 2)
-            // 2. If role is recruiter and NO companies -> Onboarding (Screen 2 Recruiter)
-            
-            const isCandidateIncomplete = user.role === 'candidate' && !user.intent_text;
-            const isRecruiterIncomplete = user.role === 'recruiter' && (!user.companies || user.companies.length === 0);
-
-            if (isCandidateIncomplete || isRecruiterIncomplete) {
-                navigate('/onboarding');
-            } else {
+            // 0. If company_id already exists, they are done with onboarding
+            if (user.company_id) {
                 navigate('/');
+                return;
+            }
+
+            // 1. NEW: Respect the onboarding flag from documentation
+            // onboarding: true means GitHub/LinkedIn accounts are not fully linked
+            if (user.onboarding === true) {
+                navigate('/onboarding');
+                return;
+            }
+
+            // 2. Force onboarding if candidate (to upgrade) or if recruiter has no company
+            if ((user.role as string) === 'candidate' || (user.role === 'recruiter' && (!user.companies || user.companies.length === 0))) {
+                navigate('/onboarding');
+                return;
             }
 
         } catch (err) {

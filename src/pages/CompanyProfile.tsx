@@ -14,7 +14,9 @@ export default function CompanyProfile() {
 
   const fetchCompany = async () => {
     try {
-      const res = await api.get('/company');
+      // Note: Backend might not have GET /recruiter/company. 
+      // If it doesn't, this will fail silently.
+      const res = await api.get('/recruiters/company');
       // Handle array or single object
       const data = Array.isArray(res.data) ? res.data[0] : res.data;
       if (data) {
@@ -34,7 +36,7 @@ export default function CompanyProfile() {
     setLoading(true);
     setStatus('idle');
     try {
-      await api.post('/company', formData);
+      await api.post('/recruiters/company', formData);
       setStatus('success');
     } catch (err) {
       console.error(err);

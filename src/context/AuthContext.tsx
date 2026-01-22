@@ -21,28 +21,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await api.get('/auth/me');
-        setUser(res.data.user);
-      } catch (err) {
-        console.error('Failed to fetch user', err);
-        logout();
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchUser = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data.user);
+    } catch (err) {
+      console.error('Failed to fetch user', err);
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  }, [token, logout]);
 
+  useEffect(() => {
     if (token) {
       fetchUser();
     } else {
       setLoading(false);
     }
-  }, [token, logout]);
+  }, [token, fetchUser]);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, refreshUser: fetchUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

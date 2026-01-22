@@ -9,17 +9,21 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'candidate' | 'recruiter' | 'admin';
+  role: 'recruiter' | 'admin';
   photo_url?: string;
+  onboarding: boolean;
+  company_id?: string;
   companies?: Company[];
   intent_text?: string;
+  oauth_accounts?: { provider: string; provider_user_id: string }[];
 }
 
 export interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (token: string) => void;
-  logout: () => void;
+  logout: () => void; // TODO: Add logout function
+  refreshUser: () => Promise<void>;
   loading: boolean;
 }
 

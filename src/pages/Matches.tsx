@@ -30,7 +30,7 @@ export default function Matches() {
   const fetchMatches = async () => {
     try {
       const res = await api.get('/matches');
-      setMatches(res.data.matches || []);
+      setMatches(res.data.matches || res.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -43,7 +43,7 @@ export default function Matches() {
     if (!message || !selectedMatch) return;
 
     try {
-      await api.post('/messages', {
+      await api.post('/matches/messages', {
         match_id: selectedMatch.id,
         content: message
       });

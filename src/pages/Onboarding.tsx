@@ -1,202 +1,117 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-// import { useAuth } from '../context/AuthContext';
-// import { useNavigate } from 'react-router-dom';
-// import clsx from 'clsx';
-import { UserCircle, Briefcase, ChevronRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Briefcase } from 'lucide-react';
 
-type Step = 'role' | 'candidate-intent' | 'candidate-constraints' | 'recruiter-company' | 'recruiter-job';
+type Step = 'recruiter-company' | 'recruiter-job';
 
 export default function Onboarding() {
-  // const { user, login } = useAuth(); 
-  // const navigate = useNavigate();
-  const [step, setStep] = useState<Step>('role');
+  const { user, refreshUser } = useAuth();
+  // Start directly at creating a company.
+  const [step, setStep] = useState<Step>('recruiter-company');
   const [loading, setLoading] = useState(false);
 
-  // Form States
-  const [intentData, setIntentData] = useState({ intent_text: '', why_text: '' });
-  const [constraints, setConstraints] = useState({ min_salary: 100000, remote: false });
-  const [companyData, setCompanyData] = useState({ name: '', website: '' });
-  const [jobData, setJobData] = useState({ company_id: '', problem_statement: '', skills: '' });
-
-  // Step 1: Role Selection
-  const handleRoleSelect = async (role: 'recruiter') => {
-    if (role === 'recruiter') {
-      try {
-        setLoading(true);
-        // We explicitly switch role. If candidate, we just proceed.
-        await api.put('/user/role', { role: 'recruiter' });
-        // In a real app we'd refresh the auth context here. 
-        // For now, assume backend state is updated and we proceed locally.
-        setStep('recruiter-company');
-      } catch (err) {
-        console.error('Failed to switch role', err);
-        alert('Failed to update role. Please try again.');
-        setLoading(false);
+  // Auto-upgrade if candidate
+  useEffect(() => {
+    const checkUpgrade = async () => {
+      if ((user?.role as string) === 'candidate') {
+        try {
+          await api.put('/user/role', { role: 'recruiter' });
+          await refreshUser();
+        } catch (err) {
+          console.error("Auto-upgrade failed", err);
+        }
       }
-    } else {
-      // Stay candidate
-      setStep('candidate-intent');
-    }
-  };
+    };
+    checkUpgrade();
+  }, [user, refreshUser]);
 
-  // Candidate Flow
-  const submitIntent = async () => {
-    try {
-      setLoading(true);
-      await api.post('/user/intent', intentData);
-      setStep('candidate-constraints');
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
-
-  const submitConstraints = async () => {
-    try {
-      setLoading(true);
-      await api.post('/user/constraints', constraints);
-      // Done
-      window.location.href = '/'; 
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
+  // Form States
+  const [companyData, setCompanyData] = useState({ name: '', website: '' });
+  const [jobData, setJobData] = useState({ 
+    company_id: '', 
+    problem_statement: '', 
+    expectations: '',
+    non_negotiables: '',
+    deal_breakers: '',
+    skills: '' 
+  });
 
   // Recruiter Flow
   const submitCompany = async () => {
     try {
         setLoading(true);
-        const res = await api.post('/company', companyData);
+        
+        // 1. Explicitly update role to recruiter first
+        await api.put('/user/role', { role: 'recruiter' });
+        // NOTE: refreshUser is good, but the next POST will return the updated user too.
+        
+        // 2. Then create the company
+        // Backend now returns { company: { id, ... }, user: { company_id, ... } }
+        const res = await api.post('/recruiters/company', companyData);
+        
+        const newCompanyId = res.data.company?.id || res.data.user?.company_id;
+        
+        if (!newCompanyId) {
+            throw new Error("Failed to retrieve company ID from response");
+        }
+
         // Save company ID for job post
-        setJobData(prev => ({...prev, company_id: res.data.id}));
+        setJobData(prev => ({...prev, company_id: newCompanyId}));
+        
+        // Optionally refresh user context with the returned user object to keep frontend in sync
+        // if (res.data.user) { setUser(res.data.user); } // If we had setUser access, but we have refreshUser
+        await refreshUser();
+        
         setStep('recruiter-job');
-    } catch (e) {
-        console.error("Failed to create company", e);
-        // Hack: if company already exists or fail, maybe skip?
-        // simple alert for now
-        alert("Failed to create company. Check if it exists.");
+    } catch (e: any) {
+        console.error("Onboarding submission failed", e);
+        alert(e.response?.data?.error || e.message || "Failed to complete step. Please try again.");
     } finally { setLoading(false); }
   };
 
   const submitJob = async () => {
       try {
           setLoading(true);
-          await api.post('/job', {
+          await api.post('/recruiters/job', {
              company_id: jobData.company_id,
              problem_statement: jobData.problem_statement,
+             expectations: jobData.expectations,
+             non_negotiables: jobData.non_negotiables,
+             deal_breakers: jobData.deal_breakers,
              skills_required: jobData.skills.split(',').map(s => s.trim()),
-             constraints_json: { remote_only: true } // Simplified constraint for onboarding
+             constraints_json: { 
+                 remote_only: true,
+                 salary_range: [0, 0],
+                 experience_years: 0,
+                 location: 'Remote'
+             }
           });
+          // Force a hard reload or navigate to root to ensure Context updates with new company/job info
           window.location.href = '/';
-      } catch (e) { console.error(e); } finally { setLoading(false); }
+      } catch (e: any) { 
+          console.error(e); 
+          const errorMsg = e.response?.data?.error || "Failed to post job. Please try again.";
+          alert(errorMsg);
+      } finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
         <div className="w-full max-w-[440px] mb-12 text-center text-balance">
             <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                {step === 'role' && "Welcome to Saber"}
-                {step === 'candidate-intent' && "What do you want to build?"}
-                {step === 'candidate-constraints' && "Non-negotiables"}
-                {step === 'recruiter-company' && "Setup your Company"}
+                {step === 'recruiter-company' && "Welcome to Saber"}
                 {step === 'recruiter-job' && "Post your first role"}
             </h2>
              <p className="mt-2 text-sm text-gray-500 font-normal">
-                {step === 'role' && "Choose your path to get started with the platform."}
-                {step === 'candidate-intent' && "Share your technical ambitions and problem-solving passion."}
-                {step === 'candidate-constraints' && "Define your core requirements for a successful match."}
+                {step === 'recruiter-company' && "Set up your workspace to start hiring top talent."}
+                {step === 'recruiter-job' && "Describe the challenge. We'll find the match."}
             </p>
         </div>
 
         <div className="w-full max-w-[440px]">
             <div className="space-y-4">
                 
-                {/* ROLE SELECTION */}
-                {step === 'role' && (
-                    <div className="space-y-3">
-                        <button 
-                            onClick={() => handleRoleSelect('recruiter')}
-                            className="group relative w-full flex items-center p-5 border border-gray-200 rounded-lg hover:border-black hover:bg-gray-50 transition-all text-left"
-                            disabled={loading}
-                        >
-                            <div className="h-10 w-10 flex-shrink-0 border border-gray-200 rounded-lg flex items-center justify-center bg-white group-hover:border-black transition-colors">
-                                <Briefcase size={18} className="text-gray-900" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-[14px] font-medium text-gray-900">I'm hiring talent</p>
-                                <p className="text-[13px] text-gray-500 font-normal">Manage jobs and candidates.</p>
-                            </div>
-                            <ChevronRight className="ml-auto text-gray-300 group-hover:text-black transition-all" size={14} />
-                        </button>
-
-                        <button 
-                             onClick={() => setStep('candidate-intent')}
-                             className="group relative w-full flex items-center p-5 border border-gray-200 rounded-lg hover:border-black hover:bg-gray-50 transition-all text-left"
-                        >
-                            <div className="h-10 w-10 flex-shrink-0 border border-gray-200 rounded-lg flex items-center justify-center bg-white group-hover:border-black transition-colors">
-                                <UserCircle size={18} className="text-gray-900" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-[14px] font-medium text-gray-900">I'm looking for a job</p>
-                                <p className="text-[13px] text-gray-500 font-normal">Find your next engineering challenge.</p>
-                            </div>
-                            <ChevronRight className="ml-auto text-gray-300 group-hover:text-black transition-all" size={14} />
-                        </button>
-                    </div>
-                )}
-
-                {/* CANDIDATE FLOW */}
-                {step === 'candidate-intent' && (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Dream Role</label>
-                            <textarea 
-                                className="input-base min-h-[120px] py-3 text-balance leading-relaxed"
-                                placeholder={"Describe the problems you want to solve, e.g. \"Building highly available distributed systems...\""}
-                                value={intentData.intent_text}
-                                onChange={e => setIntentData({...intentData, intent_text: e.target.value})}
-                            />
-                        </div>
-                         <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">The Spark</label>
-                            <textarea 
-                                className="input-base min-h-[100px] py-3 text-balance leading-relaxed"
-                                placeholder="Why does this specific domain or tech excite you?"
-                                value={intentData.why_text}
-                                onChange={e => setIntentData({...intentData, why_text: e.target.value})}
-                            />
-                        </div>
-                        <button onClick={submitIntent} disabled={loading} className="btn-primary w-full h-11 text-[14px]">Continue</button>
-                    </div>
-                )}
-
-                {step === 'candidate-constraints' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                         <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Annual Salary Baseline (USD)</label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                                <input
-                                    type="number"
-                                    className="input-base pl-7"
-                                    placeholder="140,000"
-                                    value={constraints.min_salary}
-                                    onChange={e => setConstraints({...constraints, min_salary: Number(e.target.value)})}
-                                />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3 p-4 border border-gray-100 rounded-lg bg-gray-50/50">
-                            <input
-                                id="remote"
-                                type="checkbox"
-                                className="h-4 w-4 text-black border-gray-300 rounded focus:ring-0 accent-black"
-                                checked={constraints.remote}
-                                onChange={e => setConstraints({...constraints, remote: e.target.checked})}
-                            />
-                            <label htmlFor="remote" className="text-[14px] text-gray-900 font-medium">
-                                Preferred Remote Work
-                            </label>
-                        </div>
-                        <button onClick={submitConstraints} disabled={loading} className="btn-primary w-full h-11 text-[14px]">Finish Orientation</button>
-                    </div>
-                )}
-
                 {/* RECRUITER FLOW */}
                 {step === 'recruiter-company' && (
                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -208,6 +123,7 @@ export default function Onboarding() {
                                 placeholder="Acme Inc."
                                 value={companyData.name}
                                 onChange={e => setCompanyData({...companyData, name: e.target.value})}
+                                autoFocus
                             />
                         </div>
                         <div>
@@ -220,34 +136,72 @@ export default function Onboarding() {
                                 onChange={e => setCompanyData({...companyData, website: e.target.value})}
                             />
                         </div>
-                        <button onClick={submitCompany} disabled={loading} className="btn-primary w-full h-11 text-[14px]">Create Workspace</button>
+                        <button onClick={submitCompany} disabled={loading} className="btn-primary w-full h-11 text-[14px] flex items-center justify-center gap-2">
+                            {loading ? 'Creating...' : (
+                                <>
+                                    <Briefcase size={16} /> Create Workspace
+                                </>
+                            )}
+                        </button>
                     </div>
                 )}
 
-                 {step === 'recruiter-job' && (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {step === 'recruiter-job' && (
+                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <div>
+                             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Problem Statement</label>
+                             <textarea 
+                                 className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
+                                 placeholder="Describe a technical challenge the candidate will solve..."
+                                 value={jobData.problem_statement}
+                                 onChange={e => setJobData({...jobData, problem_statement: e.target.value})}
+                                 autoFocus
+                             />
+                         </div>
                          <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Problem Statement</label>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Day-to-day Expectations</label>
                             <textarea 
-                                className="input-base min-h-[120px] py-3 text-balance leading-relaxed"
-                                placeholder="Describe a technical challenge the candidate will solve..."
-                                value={jobData.problem_statement}
-                                onChange={e => setJobData({...jobData, problem_statement: e.target.value})}
+                                className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
+                                placeholder="What will their typical day look like?"
+                                value={jobData.expectations}
+                                onChange={e => setJobData({...jobData, expectations: e.target.value})}
                             />
                         </div>
-                         <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Key Skills</label>
-                            <input 
-                                type="text"
-                                className="input-base"
-                                placeholder="Go, React, Distributed Systems"
-                                value={jobData.skills}
-                                onChange={e => setJobData({...jobData, skills: e.target.value})}
-                            />
-                        </div>
-                        <button onClick={submitJob} disabled={loading} className="btn-primary w-full h-11 text-[14px]">Publish Job</button>
-                    </div>
-                )}
+                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Non-Negotiables</label>
+                                <textarea 
+                                    className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
+                                    placeholder="Must-have skills/traits..."
+                                    value={jobData.non_negotiables}
+                                    onChange={e => setJobData({...jobData, non_negotiables: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Deal-Breakers</label>
+                                <textarea 
+                                    className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
+                                    placeholder="What would disqualify them?"
+                                    value={jobData.deal_breakers}
+                                    onChange={e => setJobData({...jobData, deal_breakers: e.target.value})}
+                                />
+                            </div>
+                         </div>
+                          <div>
+                             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Key Skills</label>
+                             <input 
+                                 type="text"
+                                 className="input-base"
+                                 placeholder="Go, React, Distributed Systems"
+                                 value={jobData.skills}
+                                 onChange={e => setJobData({...jobData, skills: e.target.value})}
+                             />
+                         </div>
+                         <button onClick={submitJob} disabled={loading} className="btn-primary w-full h-11 text-[14px]">
+                             {loading ? 'Publishing...' : 'Publish Job & Finish'}
+                         </button>
+                     </div>
+                 )}
             </div>
         </div>
     </div>

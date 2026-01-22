@@ -72,6 +72,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <button className="text-gray-500 hover:text-black transition-colors p-1.5 rounded-full hover:bg-gray-100">
               <Bell size={18} />
             </button>
+            <button 
+              onClick={logout}
+              className="hidden sm:flex text-gray-500 hover:text-red-600 transition-colors p-1.5 rounded-full hover:bg-red-50"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
             
             <div className="relative">
               <button 
