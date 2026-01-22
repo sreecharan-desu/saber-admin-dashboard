@@ -25,7 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
     try {
       const res = await api.get('/auth/me');
-      setUser(res.data.user);
+      // Backend returns the user object directly, not wrapped in { user: ... }
+      setUser(res.data);
     } catch (err) {
       console.error('Failed to fetch user', err);
       logout();
