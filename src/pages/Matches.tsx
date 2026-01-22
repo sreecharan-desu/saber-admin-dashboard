@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { MessageSquare, User, Briefcase } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 interface Message {
