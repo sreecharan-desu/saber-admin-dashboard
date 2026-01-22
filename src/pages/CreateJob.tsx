@@ -5,8 +5,16 @@ import { AlertCircle, Plus, X } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
+
 export default function CreateJob() {
-  const { user } = useAuth(); // We might use this to verify company state
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,21 +34,41 @@ export default function CreateJob() {
   });
 
   useEffect(() => {
-    // We need to fetch the company ID associated with the user first
-    // Since there's no direct "get my company" endpoint documented for simple CRUD,
-    // we'll fetch /auth/me include companies? The backend User model has companies[].
-    // Let's assume we can fetch it or we prompt relevant error.
-    
-    // For MVP, Recruiter MUST know their company ID, or we fetch it via a helper?
-    // Actually, createJob requires `company_id`.
-    // Let's stick a "Fetch My Company" logic or just hardcode for the first company found?
-    
-    // Better: GET /auth/me sends full user object. If `companies` are included implicitly
-    // via Prisma relation. The current /auth/me implementation fetches user by ID.
-    // We might need to check if it includes companies.
-    // If not, we will ask the user to input Company ID or handle it gracefully.
-    // Let's try to infer it from context if possible, otherwise we ask.
-  }, []);
+    // 1. Try to get company from user context
+    if (user?.companies && user.companies.length > 0) {
+      setCompanyId(user.companies[0].id);
+      return;
+    }
+
+    // 2. If not in context, try to fetch it
+    const fetchCompany = async () => {
+      try {
+        const res = await api.get('/company');
+        // Assuming the API returns a list of companies or a single company object
+        // Adjust based on actual API response structure
+        const companies = Array.isArray(res.data) ? res.data : [res.data];
+        
+        if (companies.length > 0 && companies[0]?.id) {
+          setCompanyId(companies[0].id);
+        } else {
+          // No company found, prompt user to create one
+          const confirmCreate = window.confirm(
+            "You need to create a company profile before posting a job. Would you like to create one now?"
+          );
+          if (confirmCreate) {
+            navigate('/company');
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch company", err);
+        // Fallback: stay on page, maybe they know the ID or will fetch it later
+      }
+    };
+
+    if (user) {
+      fetchCompany();
+    }
+  }, [user, navigate]);
 
   const addSkill = () => {
     if (formData.newSkill && !formData.skills_required.includes(formData.newSkill)) {
@@ -90,144 +118,156 @@ export default function CreateJob() {
 
       await api.post('/job', payload);
       navigate('/'); // Back to dashboard
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to post job");
+    } catch (err) {
+      const errorMsg = (err as ApiError).response?.data?.error || "Failed to post job";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Post a New Job</h1>
+    <div className="max-w-3xl mx-auto py-4">
+      <div className="mb-8">
+           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">New Role</h1>
+           <p className="text-sm text-gray-500 font-normal">Define the requirements for your next hire.</p>
+      </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4 mb-6">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="ml-3 text-sm text-red-700">{error}</div>
-          </div>
+        <div className="rounded-lg bg-red-50 border border-red-100 p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div className="text-sm text-red-800 font-medium">{error}</div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8 bg-white shadow rounded-lg p-8">
+      <form onSubmit={handleSubmit} className="space-y-8">
         
         {/* Helper for Company ID */}
-        <div>
-           <label className="block text-sm font-medium text-gray-700">Company ID</label>
-           <input 
-             type="text" 
-             value={companyId || ''} 
-             onChange={(e) => setCompanyId(e.target.value)}
-             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm border p-2"
-             placeholder="Paste UUID if known, or we will prompt"
-           />
-           <p className="text-xs text-gray-500 mt-1">If you just created a company, check the response or database.</p>
-        </div>
+        {/* Hidden Company ID Logic (or minimal display if needed) */}
+        {!companyId && (
+            <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 flex flex-col gap-2">
+               <label className="text-sm font-medium text-amber-900">Missing Company Context</label>
+               <input 
+                 type="text" 
+                 value={companyId || ''} 
+                 onChange={(e) => setCompanyId(e.target.value)}
+                 className="input-base bg-white"
+                 placeholder="Enter Company UUID manually"
+                 autoFocus
+               />
+               <p className="text-xs text-amber-700">We couldn't detect your active company. Please enter ID manually.</p>
+            </div>
+        )}
 
-        <div className="space-y-6 border-b border-gray-200 pb-8">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Core Requirements</h3>
-            
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700">Problem Statement</label>
-                    <textarea
-                        rows={3}
-                        className="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
-                        placeholder="What needs to be solved?"
-                        value={formData.problem_statement}
-                        onChange={e => setFormData({...formData, problem_statement: e.target.value})}
-                        required
-                    />
+        <div className="card-base p-8 space-y-8">
+            <div className="space-y-4">
+                <h3 className="text-base font-semibold text-gray-900">Core Scope</h3>
+                
+                <div className="space-y-5">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Problem Statement</label>
+                        <textarea
+                            rows={3}
+                            className="input-base min-h-[100px] py-3 text-balance leading-relaxed"
+                            placeholder="What fundamental problem will this role solve?"
+                            value={formData.problem_statement}
+                            onChange={e => setFormData({...formData, problem_statement: e.target.value})}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Day-to-Day Expectations</label>
+                        <textarea
+                            rows={4}
+                            className="input-base min-h-[120px] py-3 text-balance leading-relaxed"
+                            placeholder="Describe the routine and key responsibilities..."
+                            value={formData.expectations}
+                            onChange={e => setFormData({...formData, expectations: e.target.value})}
+                            required
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-8 space-y-4">
+                 <h3 className="text-base font-semibold text-gray-900">Skills & Parameters</h3>
+                
+                <div>
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Required Skills</label>
+                    <div className="flex gap-2 mb-3">
+                        <input
+                            type="text"
+                            className="input-base flex-1"
+                            placeholder="Add a skill (e.g. TypeScript)"
+                            value={formData.newSkill}
+                            onChange={e => setFormData({...formData, newSkill: e.target.value})}
+                            onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                        />
+                        <button type="button" onClick={addSkill} className="btn-secondary h-9 w-9 p-0 flex items-center justify-center">
+                            <Plus size={16} />
+                        </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {formData.skills_required.map(skill => (
+                            <span key={skill} className="inline-flex items-center pl-2.5 pr-1 py-0.5 rounded-md text-xs font-medium bg-black text-white">
+                                {skill}
+                                <button
+                                    type="button"
+                                    onClick={() => removeSkill(skill)}
+                                    className="ml-1.5 hover:text-gray-300"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="sm:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700">Expectations</label>
-                    <textarea
-                        rows={3}
-                        className="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
-                        placeholder="What will the candidate do day-to-day?"
-                        value={formData.expectations}
-                        onChange={e => setFormData({...formData, expectations: e.target.value})}
-                        required
-                    />
+                <div className="grid grid-cols-2 gap-5 pt-2">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Salary Floor ($)</label>
+                        <input type="number" className="input-base"
+                            value={formData.min_salary} onChange={e => setFormData({...formData, min_salary: Number(e.target.value)})} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Salary Ceiling ($)</label>
+                        <input type="number" className="input-base"
+                            value={formData.max_salary} onChange={e => setFormData({...formData, max_salary: Number(e.target.value)})} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Experience (Yrs)</label>
+                        <input type="number" className="input-base"
+                            value={formData.experience_years} onChange={e => setFormData({...formData, experience_years: Number(e.target.value)})} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Location</label>
+                         <input type="text" className="input-base"
+                            placeholder="Remote"
+                            value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div className="space-y-6 border-b border-gray-200 pb-8">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Skills & Constraints</h3>
-            
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Required Skills</label>
-                <div className="mt-1 flex gap-2">
-                    <input
-                        type="text"
-                        className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
-                        placeholder="Add a skill (e.g. React)"
-                        value={formData.newSkill}
-                        onChange={e => setFormData({...formData, newSkill: e.target.value})}
-                        onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                    />
-                    <button type="button" onClick={addSkill} className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none">
-                        <Plus size={20} />
-                    </button>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.skills_required.map(skill => (
-                        <span key={skill} className="inline-flex rounded-full items-center py-0.5 pl-2.5 pr-1 text-sm font-medium bg-primary-100 text-primary-700">
-                            {skill}
-                            <button
-                                type="button"
-                                onClick={() => removeSkill(skill)}
-                                className="flex-shrink-0 ml-0.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-primary-400 hover:bg-primary-200 hover:text-primary-500 focus:outline-none"
-                            >
-                                <span className="sr-only">Remove {skill}</span>
-                                <X size={14} />
-                            </button>
-                        </span>
-                    ))}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">Min Salary ($)</label>
-                    <input type="number" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        value={formData.min_salary} onChange={e => setFormData({...formData, min_salary: Number(e.target.value)})} />
-                </div>
-                <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">Max Salary ($)</label>
-                    <input type="number" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        value={formData.max_salary} onChange={e => setFormData({...formData, max_salary: Number(e.target.value)})} />
-                </div>
-                <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">Experience (Years)</label>
-                    <input type="number" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        value={formData.experience_years} onChange={e => setFormData({...formData, experience_years: Number(e.target.value)})} />
-                </div>
-                <div className="sm:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700">Location</label>
-                     <input type="text" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        placeholder="Remote / City"
-                        value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
-                </div>
-            </div>
-        </div>
-
-        <div className="pt-5">
-            <div className="flex justify-end">
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className={clsx(
-                        "ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500",
-                        loading && "opacity-75 cursor-wait"
-                    )}
-                >
-                    {loading ? 'Publishing...' : 'Publish Job'}
-                </button>
-            </div>
+        <div className="flex justify-end gap-3">
+            <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="btn-secondary"
+            >
+                Cancel
+            </button>
+            <button
+                type="submit"
+                disabled={loading}
+                className={clsx(
+                    "btn-primary w-32",
+                    loading && "opacity-75 cursor-wait"
+                )}
+            >
+                {loading ? 'Publishing...' : 'Publish'}
+            </button>
         </div>
       </form>
     </div>

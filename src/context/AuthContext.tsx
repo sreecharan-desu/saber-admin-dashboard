@@ -1,22 +1,7 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'candidate' | 'recruiter' | 'admin';
-  photo_url?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (token: string) => void;
-  logout: () => void;
-  loading: boolean;
-}
+import type { User, AuthContextType } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -25,36 +10,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem('saber_token'));
   const [loading, setLoading] = useState(true);
 
+  const login = useCallback((newToken: string) => {
+    localStorage.setItem('saber_token', newToken);
+    setToken(newToken);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('saber_token');
+    setToken(null);
+    setUser(null);
+  }, []);
+
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        setUser(res.data.user);
+      } catch (err) {
+        console.error('Failed to fetch user', err);
+        logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (token) {
       fetchUser();
     } else {
       setLoading(false);
     }
-  }, [token]);
-
-  const fetchUser = async () => {
-    try {
-      const res = await api.get('/auth/me');
-      setUser(res.data.user);
-    } catch (err) {
-      console.error('Failed to fetch user', err);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = (newToken: string) => {
-    localStorage.setItem('saber_token', newToken);
-    setToken(newToken);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('saber_token');
-    setToken(null);
-    setUser(null);
-  };
+  }, [token, logout]);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>

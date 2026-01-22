@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { Building, Globe, CheckCircle, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
@@ -7,6 +7,27 @@ export default function CompanyProfile() {
   const [formData, setFormData] = useState({ name: '', website: '' });
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    fetchCompany();
+  }, []);
+
+  const fetchCompany = async () => {
+    try {
+      const res = await api.get('/company');
+      // Handle array or single object
+      const data = Array.isArray(res.data) ? res.data[0] : res.data;
+      if (data) {
+        setFormData({
+            name: data.name || '',
+            website: data.website || ''
+        });
+      }
+    } catch (err) {
+      // It's okay if it fails, maybe user has no company yet
+      console.log('No existing company profile found or failed to fetch', err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +36,7 @@ export default function CompanyProfile() {
     try {
       await api.post('/company', formData);
       setStatus('success');
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setStatus('error');
     } finally {

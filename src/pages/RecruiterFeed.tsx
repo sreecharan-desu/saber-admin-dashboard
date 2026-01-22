@@ -1,17 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Check, X, Briefcase, MapPin, DollarSign, Brain } from 'lucide-react';
+// No unused lucide-react icons here now
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface Candidate {
-  candidate_id: string;
-  name: string; // Often hidden, but API might return strict subset
-  intent: string;
-  why: string;
-  skills: { name: string; confidence: number }[];
-  match_score?: number;
-  relevant_job_id: string; // The job this candidate matched against constraints for
-}
+import type { Candidate } from '../types';
 
 export default function RecruiterFeed() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -53,14 +45,21 @@ export default function RecruiterFeed() {
     }
   };
 
-  if (loading) return <div className="flex justify-center p-20"><div className="animate-spin h-8 w-8 border-4 border-primary-500 rounded-full border-t-transparent"></div></div>;
+  if (loading) return (
+      <div className="flex justify-center items-center h-[50vh]">
+          <div className="w-6 h-6 border-2 border-gray-200 border-t-black rounded-full animate-spin"></div>
+      </div>
+  );
 
   if (candidates.length === 0) {
     return (
-        <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-gray-900">All caught up!</h2>
-            <p className="text-gray-500 mt-2">No more candidates match your criteria right now.</p>
-            <button onClick={fetchFeed} className="mt-4 text-primary-600 hover:underline">Refresh Feed</button>
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+            <div className="w-12 h-12 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center mb-4">
+               <div className="w-6 h-6 border-2 border-gray-200 rounded-full"></div>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 tracking-tight">All caught up</h2>
+            <p className="text-sm text-gray-500 mt-1 max-w-xs font-normal">There are no more candidates matching your active job criteria.</p>
+            <button onClick={fetchFeed} className="btn-secondary mt-6 h-9 text-xs">Refresh Feed</button>
         </div>
     );
   }
@@ -69,42 +68,61 @@ export default function RecruiterFeed() {
   const card = candidates[0];
 
   return (
-    <div className="max-w-xl mx-auto py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Candidate Recommendations</h1>
+    <div className="max-w-xl mx-auto py-4">
+      <div className="flex justify-between items-end mb-10">
+        <div>
+           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Discover</h1>
+           <p className="text-sm text-gray-500 font-normal">Candidate recommendations for your active roles.</p>
+        </div>
+      </div>
       
-      <div className="relative h-[600px] w-full">
-        <AnimatePresence>
+      <div className="relative h-[650px] w-full">
+        <AnimatePresence mode="wait">
             <motion.div
                 key={card.candidate_id}
-                initial={{ scale: 0.95, opacity: 0 }}
+                initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ x: 300, opacity: 0 }} // Simple exit animation for now
-                className="absolute inset-0 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 flex flex-col"
+                exit={{ y: 20, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 card-base flex flex-col overflow-hidden"
             >
-                {/* Header (Anonymized or Real) */}
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white h-32 flex flex-col justify-end">
-                    <h2 className="text-2xl font-bold">Candidate</h2> 
-                    <p className="text-blue-100 text-sm">Matches Job ID: ...{card.relevant_job_id?.slice(-6)}</p>
+                {/* Header (Anonymized) */}
+                <div className="p-8 border-b border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold tracking-tight text-gray-900">Candidate</h2>
+                        <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded border border-gray-100">
+                             id: {card.candidate_id.slice(0, 8)}
+                        </span>
+                    </div>
                 </div>
 
-                <div className="p-6 flex-1 overflow-y-auto space-y-6">
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Intent</h3>
-                        <p className="text-lg text-gray-900 leading-relaxed font-medium">"{card.intent}"</p>
+                <div className="p-8 flex-1 overflow-y-auto space-y-8 no-scrollbar">
+                    <div className="space-y-3">
+                        <h3 className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.2em]">Saber Intent</h3>
+                        <p className="text-[15px] text-gray-900 font-normal leading-relaxed text-balance">
+                           "{card.intent_text}"
+                        </p>
                     </div>
 
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">The "Why"</h3>
-                        <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg italic">"{card.why}"</p>
-                    </div>
+                    {card.why && (
+                      <div className="space-y-3">
+                           <h3 className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                             Analysis
+                           </h3>
+                           <div className="relative">
+                               <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-black" />
+                               <p className="text-[14px] text-gray-600 font-normal pl-6 leading-relaxed italic">
+                                 "{card.why}"
+                               </p>
+                           </div>
+                      </div>
+                    )}
 
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <Brain size={16} /> Top Skills
-                        </h3>
+                    <div className="space-y-4">
+                        <h3 className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.2em]">Technical Core</h3>
                         <div className="flex flex-wrap gap-2">
-                            {card.skills?.slice(0, 6).map((skill, i) => (
-                                <span key={i} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700">
+                            {card.skills?.slice(0, 8).map((skill, i) => (
+                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-md text-[12px] font-medium bg-black text-white">
                                     {skill.name}
                                 </span>
                             ))}
@@ -112,18 +130,18 @@ export default function RecruiterFeed() {
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-gray-100 grid grid-cols-2 gap-4">
+                <div className="p-8 border-t border-gray-100 flex items-center gap-4 bg-white">
                     <button
                         onClick={() => handleSwipe('left')}
-                        className="flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-red-100 text-red-600 hover:bg-red-50 transition-colors font-bold text-lg"
+                        className="btn-secondary flex-1 h-12 text-[14px] font-semibold hover:bg-gray-50 transition-all border-gray-200"
                     >
-                        <X size={24} /> Pass
+                        Decline
                     </button>
                     <button
                         onClick={() => handleSwipe('right')}
-                        className="flex items-center justify-center gap-2 py-4 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors font-bold text-lg shadow-lg shadow-primary-200"
+                        className="btn-primary flex-1 h-12 text-[14px] font-semibold transition-all shadow-none"
                     >
-                        <Check size={24} /> Connect
+                        Connect
                     </button>
                 </div>
             </motion.div>

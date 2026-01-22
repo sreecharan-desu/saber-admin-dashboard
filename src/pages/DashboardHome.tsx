@@ -1,58 +1,119 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
+import type { SystemMetrics } from '../types';
+import { Activity, Users, Briefcase } from 'lucide-react';
 
 export default function DashboardHome() {
+  const { user } = useAuth();
+  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchMetrics();
+    }
+  }, [user]);
+
+  const fetchMetrics = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/metrics');
+      setMetrics(res.data);
+    } catch (err) {
+      console.error('Failed to fetch metrics', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStats = () => {
+    if (user?.role === 'admin' && metrics) {
+      return [
+        { label: 'Total Swipes', value: metrics.overview.total_swipes.toString() },
+        { label: 'Total Matches', value: metrics.overview.total_matches.toString() },
+        { label: 'Match Rate', value: metrics.overview.match_rate },
+        { label: 'Active Jobs', value: metrics.overview.active_jobs.toString() },
+        { label: 'Active Candidates', value: metrics.overview.active_candidates.toString() },
+      ];
+    }
+    
+    // Default recruiter stats or placeholders (Mock Data)
+    return [
+        { label: 'Active Jobs', value: '12' },
+        { label: 'New Candidates', value: '48' },
+        { label: 'Pending Matches', value: '5' }
+    ];
+  };
+
+  const stats = getStats();
+
   return (
     <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-gray-600">Welcome back. Here's what's happening today.</p>
+      <div className="flex justify-between items-end mb-8">
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Overview</h2>
+        {user?.role === 'admin' && (
+             <button 
+                onClick={fetchMetrics} 
+                disabled={loading}
+                className="btn-secondary h-8 w-8 p-0"
+            >
+                <Activity size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
+        )}
+      </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {[
-                { label: 'Active Jobs', value: '12', color: 'bg-blue-500' },
-                { label: 'New Candidates', value: '48', color: 'bg-green-500' },
-                { label: 'Pending Matches', value: '5', color: 'bg-indigo-500' }
-            ].map((stat) => (
-                <div key={stat.label} className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <div className={`rounded-md p-3 ${stat.color}`}>
-                                    {/* Icon placeholder */}
-                                    <div className="h-6 w-6 text-white" />
-                                </div>
-                            </div>
-                            <div className="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt className="text-sm font-medium text-gray-500 truncate">{stat.label}</dt>
-                                    <dd>
-                                        <div className="text-lg font-medium text-gray-900">{stat.value}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {stats.map((stat) => (
+          <div key={stat.label} className="card-base p-6 hover:border-black transition-colors group">
+            <dt className="text-[12px] font-medium text-gray-400 uppercase tracking-widest">{stat.label}</dt>
+            <dd className="mt-2 text-4xl font-semibold text-gray-900 tracking-tighter font-mono">{stat.value}</dd>
+          </div>
+        ))}
+      </div>
 
-        <div className="mt-8">
-            <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <a href="/feed" className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                    <div className="flex-1 min-w-0">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-sm font-medium text-gray-900">Review Candidates</p>
-                        <p className="text-sm text-gray-500 truncate">Swipe through your daily feed</p>
-                    </div>
-                </a>
-                <a href="/jobs/new" className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                    <div className="flex-1 min-w-0">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-sm font-medium text-gray-900">Post a Job</p>
-                        <p className="text-sm text-gray-500 truncate">Create a new opening</p>
-                    </div>
-                </a>
-            </div>
+      <div className="mt-16">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-[0.2em] mb-6">Recent Events</h3>
+        <div className="card-base divide-y divide-gray-100">
+           {/* Placeholder for activity feed */}
+           <div className="p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+              <div className="flex items-center gap-4">
+                 <div className="text-gray-400">
+                    <Briefcase size={16} />
+                 </div>
+                 <div>
+                    <p className="text-sm font-medium text-gray-900">New Job Posted</p>
+                    <p className="text-xs text-gray-500 font-normal">Frontend Engineer at Acme Corp</p>
+                 </div>
+              </div>
+              <span className="text-[11px] font-mono text-gray-400 uppercase">2h ago</span>
+           </div>
+           
+           <div className="p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+              <div className="flex items-center gap-4">
+                 <div className="text-gray-400">
+                    <Users size={16} />
+                 </div>
+                 <div>
+                    <p className="text-sm font-medium text-gray-900">Candidate Matched</p>
+                    <p className="text-xs text-gray-500 font-normal">John Doe matched with Backend Role</p>
+                 </div>
+              </div>
+              <span className="text-[11px] font-mono text-gray-400 uppercase">5h ago</span>
+           </div>
         </div>
+      </div>
+      
+      {/* Quick Actions as a simple link list or grid if needed, but keeping it minimal for now */}
+       <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="card-base p-6">
+               <h3 className="font-medium text-gray-900 mb-2">Quick Actions</h3>
+               <div className="space-y-2">
+                   <a href="/jobs/new" className="block text-sm text-gray-600 hover:text-black hover:underline decoration-gray-300 underline-offset-4">Post a new job opportunity &rarr;</a>
+                   <a href="/feed" className="block text-sm text-gray-600 hover:text-black hover:underline decoration-gray-300 underline-offset-4">Review daily candidate feed &rarr;</a>
+               </div>
+           </div>
+       </div>
     </div>
   );
 }
