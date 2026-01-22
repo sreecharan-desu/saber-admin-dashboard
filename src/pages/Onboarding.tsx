@@ -12,7 +12,12 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
 
   // Auto-upgrade if candidate
-  useEffect(() => {
+    useEffect(() => {
+      
+        if(user?.company_id){
+            //forcefully navigate to dashboard 
+            window.location.href = '/dashboard';
+        }
     const checkUpgrade = async () => {
       if ((user?.role as string) === 'candidate') {
         try {

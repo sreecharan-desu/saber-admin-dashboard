@@ -22,25 +22,47 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode, roles?
     );
   }
   
-  if (!token) return <Navigate to="/login" />;
+  if (!token) return <Navigate to="/login" replace />;
 
   // Force onboarding if:
   // 1. User does not have a company_id yet
   // 2. AND (Backend flag onboarding is true OR Role is candidate OR Recruiter has no companies array)
-  const needsOnboarding = !user?.company_id || (
-    user?.onboarding === true || 
-    (user?.role as string) === 'candidate' || 
-    (user?.role === 'recruiter' && (!user.companies || user.companies.length === 0))
-  );
+  // Re-evaluating needsOnboarding with full documentation logic for robustness
+  const isCandidate = (user?.role as string) === 'candidate';
+  const noCompany = !user?.company_id && (!user?.companies || user.companies.length === 0);
+  const needsConnections = user?.onboarding === true;
+
+  const needsOnboarding = needsConnections || isCandidate || noCompany;
 
   // Allow access to /onboarding itself if onboarding is needed
   if (needsOnboarding && window.location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" />;
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // If they don't need onboarding but are trying to hit /onboarding, send them home
+  if (!needsOnboarding && window.location.pathname === '/onboarding') {
+    return <Navigate to="/" replace />;
   }
   
   if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to="/unauthorized" />;
+    return <Navigate to="/unauthorized" replace />;
   }
+  
+  return <>{children}</>;
+}
+
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { token, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+  
+  if (token) return <Navigate to="/" replace />;
   
   return <>{children}</>;
 }
@@ -70,7 +92,11 @@ function Unauthorized() {
 function AppContent() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={
+        <GuestRoute>
+          <Login />
+        </GuestRoute>
+      } />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/onboarding" element={
