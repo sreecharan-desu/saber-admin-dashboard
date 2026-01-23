@@ -193,12 +193,7 @@ export default function MyJobs() {
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-gray-50 flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-gray-400">
-                    <div className="flex items-center gap-1.5">
-                      <Target size={14} strokeWidth={2.5} />
-                      <span className="text-[11px] font-bold">48 Matches</span>
-                    </div>
-                  </div>
+
 
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
                     <Link
