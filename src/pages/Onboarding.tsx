@@ -1,24 +1,23 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Zap, Globe, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
 type Step = 'recruiter-company' | 'recruiter-job';
 
 export default function Onboarding() {
   const { user, refreshUser } = useAuth();
-  // Start directly at creating a company.
   const [step, setStep] = useState<Step>('recruiter-company');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if company exists
   useEffect(() => {
     if (user?.company_id) {
       window.location.href = '/';
     }
   }, [user]);
 
-  // Form States
   const [companyData, setCompanyData] = useState({ name: '', website: '' });
   const [jobData, setJobData] = useState({ 
     company_id: '', 
@@ -29,36 +28,21 @@ export default function Onboarding() {
     skills: '' 
   });
 
-  // Recruiter Flow
   const submitCompany = async () => {
     try {
         setLoading(true);
-        
-        // 1. Explicitly update role to recruiter first
         await api.put('/user/role', { role: 'recruiter' });
-        // NOTE: refreshUser is good, but the next POST will return the updated user too.
-        
-        // 2. Then create the company
-        // Backend now returns { company: { id, ... }, user: { company_id, ... } }
         const res = await api.post('/recruiters/company', companyData);
-        
         const newCompanyId = res.data.company?.id || res.data.user?.company_id;
         
-        if (!newCompanyId) {
-            throw new Error("Failed to retrieve company ID from response");
-        }
+        if (!newCompanyId) throw new Error("Failed to retrieve company ID");
 
-        // Save company ID for job post
         setJobData(prev => ({...prev, company_id: newCompanyId}));
-        
-        // Optionally refresh user context with the returned user object to keep frontend in sync
-        // if (res.data.user) { setUser(res.data.user); } // If we had setUser access, but we have refreshUser
         await refreshUser();
-        
         setStep('recruiter-job');
     } catch (e: any) {
-        console.error("Onboarding submission failed", e);
-        alert(e.response?.data?.error || e.message || "Failed to complete step. Please try again.");
+        console.error("Onboarding failed", e);
+        alert(e.response?.data?.error || "Failed to complete step.");
     } finally { setLoading(false); }
   };
 
@@ -76,124 +60,129 @@ export default function Onboarding() {
                  remote_only: true,
                  salary_range: [0, 0],
                  experience_years: 0,
-                 location: 'Remote'
+                 location: 'Remote',
+                 equity: 'N/A'
              }
           });
-          // Force a hard reload or navigate to root to ensure Context updates with new company/job info
           window.location.href = '/';
       } catch (e: any) { 
           console.error(e); 
-          const errorMsg = e.response?.data?.error || "Failed to post job. Please try again.";
-          alert(errorMsg);
+          alert(e.response?.data?.error || "Failed to post job.");
       } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-        <div className="w-full max-w-[440px] mb-12 text-center text-balance">
-            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                {step === 'recruiter-company' && "Welcome to Saber"}
-                {step === 'recruiter-job' && "Post your first role"}
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 selection:bg-vercel-blue selection:text-white">
+        {/* Background Grid */}
+        <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40" />
+
+        <div className="w-full max-w-[480px] text-center mb-12 relative z-10">
+            <motion.div 
+               initial={{ opacity: 0, scale: 0.9 }}
+               animate={{ opacity: 1, scale: 1 }}
+               className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white text-black mb-8 shadow-2xl shadow-white/10"
+            >
+                <Sparkles size={24} />
+            </motion.div>
+            <h2 className="text-4xl font-bold tracking-tighter mb-3">
+                {step === 'recruiter-company' && "Establish Workspace"}
+                {step === 'recruiter-job' && "Define The Challenge"}
             </h2>
-             <p className="mt-2 text-sm text-gray-500 font-normal">
-                {step === 'recruiter-company' && "Set up your workspace to start hiring top talent."}
-                {step === 'recruiter-job' && "Describe the challenge. We'll find the match."}
+             <p className="text-gray-500 font-normal text-sm max-w-sm mx-auto leading-relaxed">
+                {step === 'recruiter-company' && "Create your company identity to begin analyzing technical signals."}
+                {step === 'recruiter-job' && "Describe a core technical problem your team is solving. We'll find the right talent."}
             </p>
         </div>
 
-        <div className="w-full max-w-[440px]">
-            <div className="space-y-4">
-                
-                {/* RECRUITER FLOW */}
+        <div className="w-full max-w-[480px] relative z-10">
+            <AnimatePresence mode="wait">
                 {step === 'recruiter-company' && (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Company Name</label>
-                            <input 
-                                type="text"
-                                className="input-base"
-                                placeholder="Acme Inc."
-                                value={companyData.name}
-                                onChange={e => setCompanyData({...companyData, name: e.target.value})}
-                                autoFocus
-                            />
+                    <motion.div 
+                        key="company"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-6 card-base p-10 bg-[#050505]"
+                    >
+                        <div className="space-y-6 text-left">
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Company Name</label>
+                                <div className="relative">
+                                     <Briefcase size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                                     <input 
+                                        type="text"
+                                        className="input-base pl-10"
+                                        placeholder="Acme Engineering"
+                                        value={companyData.name}
+                                        onChange={e => setCompanyData({...companyData, name: e.target.value})}
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Website</label>
+                                <div className="relative">
+                                    <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                                    <input 
+                                        type="url"
+                                        className="input-base pl-10"
+                                        placeholder="https://acme.org"
+                                        value={companyData.website}
+                                        onChange={e => setCompanyData({...companyData, website: e.target.value})}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Website</label>
-                            <input 
-                                type="url"
-                                className="input-base"
-                                placeholder="https://acme.com"
-                                value={companyData.website}
-                                onChange={e => setCompanyData({...companyData, website: e.target.value})}
-                            />
-                        </div>
-                        <button onClick={submitCompany} disabled={loading} className="btn-primary w-full h-11 text-[14px] flex items-center justify-center gap-2">
-                            {loading ? 'Creating...' : (
-                                <>
-                                    <Briefcase size={16} /> Create Workspace
-                                </>
-                            )}
+                        <button onClick={submitCompany} disabled={loading} className="btn-primary w-full h-12 text-[14px] font-bold tracking-tight">
+                            {loading ? 'Initializing...' : 'Complete Workspace Setup'}
                         </button>
-                    </div>
+                    </motion.div>
                 )}
 
-                  {step === 'recruiter-job' && (
-                     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                          <div>
-                             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Problem Statement</label>
-                             <textarea 
-                                 className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
-                                 placeholder="Describe a technical challenge the candidate will solve..."
-                                 value={jobData.problem_statement}
-                                 onChange={e => setJobData({...jobData, problem_statement: e.target.value})}
-                                 autoFocus
-                             />
-                         </div>
-                         <div>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Day-to-day Expectations</label>
-                            <textarea 
-                                className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
-                                placeholder="What will their typical day look like?"
-                                value={jobData.expectations}
-                                onChange={e => setJobData({...jobData, expectations: e.target.value})}
-                            />
+                {step === 'recruiter-job' && (
+                    <motion.div 
+                        key="job"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-8 card-base p-10 bg-[#050505]"
+                    >
+                        <div className="space-y-6 text-left">
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">The Problem Statement</label>
+                                <textarea 
+                                    className="input-base min-h-[100px] py-4 text-balance leading-relaxed resize-none"
+                                    placeholder="e.g. Scaling real-time notifications to 10k items/sec..."
+                                    value={jobData.problem_statement}
+                                    onChange={e => setJobData({...jobData, problem_statement: e.target.value})}
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Key Technical Signals</label>
+                                <div className="relative">
+                                    <Zap size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                                    <input 
+                                        type="text"
+                                        className="input-base pl-10"
+                                        placeholder="Go, Redis, Distributed Systems"
+                                        value={jobData.skills}
+                                        onChange={e => setJobData({...jobData, skills: e.target.value})}
+                                    />
+                                </div>
+                                <p className="text-[10px] text-gray-600 mt-2">Separate skills with commas.</p>
+                            </div>
                         </div>
-                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Non-Negotiables</label>
-                                <textarea 
-                                    className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
-                                    placeholder="Must-have skills/traits..."
-                                    value={jobData.non_negotiables}
-                                    onChange={e => setJobData({...jobData, non_negotiables: e.target.value})}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Deal-Breakers</label>
-                                <textarea 
-                                    className="input-base min-h-[80px] py-3 text-balance leading-relaxed"
-                                    placeholder="What would disqualify them?"
-                                    value={jobData.deal_breakers}
-                                    onChange={e => setJobData({...jobData, deal_breakers: e.target.value})}
-                                />
-                            </div>
-                         </div>
-                          <div>
-                             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Key Skills</label>
-                             <input 
-                                 type="text"
-                                 className="input-base"
-                                 placeholder="Go, React, Distributed Systems"
-                                 value={jobData.skills}
-                                 onChange={e => setJobData({...jobData, skills: e.target.value})}
-                             />
-                         </div>
-                         <button onClick={submitJob} disabled={loading} className="btn-primary w-full h-11 text-[14px]">
-                             {loading ? 'Publishing...' : 'Publish Job & Finish'}
-                         </button>
-                     </div>
-                 )}
+                        <button onClick={submitJob} disabled={loading} className="btn-primary w-full h-12 text-[14px] font-bold tracking-tight">
+                            {loading ? 'Publishing...' : 'Launch First Challenge'}
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
+            <div className="mt-12 flex justify-center items-center gap-2">
+                <div className={clsx("w-2 h-2 rounded-full", step === 'recruiter-company' ? "bg-white" : "bg-gray-800")} />
+                <div className={clsx("w-2 h-2 rounded-full", step === 'recruiter-job' ? "bg-white" : "bg-gray-800")} />
             </div>
         </div>
     </div>

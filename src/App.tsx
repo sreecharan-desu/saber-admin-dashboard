@@ -9,6 +9,7 @@ import CompanyProfile from './pages/CompanyProfile';
 import CreateJob from './pages/CreateJob';
 import RecruiterFeed from './pages/RecruiterFeed';
 import Matches from './pages/Matches';
+import MyJobs from './pages/MyJobs';
 import AdminSettings from './pages/AdminSettings';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode, roles?: string[] }) {
@@ -114,6 +115,14 @@ function AppContent() {
         </ProtectedRoute>
       } />
       
+      <Route path="/jobs" element={
+        <ProtectedRoute roles={['recruiter', 'admin']}>
+          <Layout>
+            <MyJobs />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
       <Route path="/jobs/new" element={
         <ProtectedRoute roles={['recruiter', 'admin']}>
           <Layout>
