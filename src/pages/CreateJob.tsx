@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Plus, X } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { AlertCircle, Plus, X, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,6 +16,9 @@ interface ApiError {
 export default function CreateJob() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = !!id;
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -35,40 +38,64 @@ export default function CreateJob() {
   });
 
   useEffect(() => {
+    if (isEdit) {
+      fetchJobToEdit();
+    }
+
     if (user?.company_id) {
       setCompanyId(user.company_id);
-      return;
-    }
-
-    if (user?.companies && user.companies.length > 0) {
+    } else if (user?.companies && user.companies.length > 0) {
       setCompanyId(user.companies[0].id);
-      return;
-    }
-
-    const fetchCompany = async () => {
-      try {
-        const res = await api.get('/recruiters/company');
-        const company = res.data.company;
-        
-        if (company && company.id) {
-          setCompanyId(company.id);
-        } else {
-          const confirmCreate = window.confirm(
-            "You need to create a company profile before posting a job. Would you like to create one now?"
-          );
-          if (confirmCreate) {
-            navigate('/company');
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch company", err);
-      }
-    };
-
-    if (user) {
+    } else if (user) {
       fetchCompany();
     }
-  }, [user, navigate]);
+  }, [id, user]);
+
+  const fetchCompany = async () => {
+    try {
+      const res = await api.get('/recruiters/company');
+      const company = res.data.company;
+      if (company && company.id) {
+        setCompanyId(company.id);
+      } else if (!isEdit) {
+        const confirmCreate = window.confirm(
+          "You need to create a company profile before posting a job. Would you like to create one now?"
+        );
+        if (confirmCreate) {
+          navigate('/company');
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch company", err);
+    }
+  };
+
+  const fetchJobToEdit = async () => {
+    try {
+      const res = await api.get('/recruiters/jobs');
+      const allJobs = res.data.jobs || res.data || [];
+      const job = allJobs.find((j: any) => j.id === id);
+      
+      if (job) {
+        setFormData({
+          problem_statement: job.problem_statement,
+          expectations: job.expectations,
+          non_negotiables: job.non_negotiables,
+          deal_breakers: job.deal_breakers,
+          skills_required: job.skills_required,
+          newSkill: '',
+          min_salary: job.constraints_json?.salary_range?.[0] || 0,
+          max_salary: job.constraints_json?.salary_range?.[1] || 0,
+          experience_years: job.constraints_json?.experience_years || 0,
+          location: job.constraints_json?.location || '',
+          equity: job.constraints_json?.equity || ''
+        });
+        setCompanyId(job.company_id);
+      }
+    } catch (err) {
+      console.error("Failed to fetch job for editing", err);
+    }
+  };
 
   const addSkill = () => {
     if (formData.newSkill && !formData.skills_required.includes(formData.newSkill)) {
@@ -116,10 +143,14 @@ export default function CreateJob() {
         }
       };
 
-      await api.post('/recruiters/job', payload);
-      navigate('/'); 
+      if (isEdit) {
+        await api.put(`/recruiters/job/${id}`, payload);
+      } else {
+        await api.post('/recruiters/job', payload);
+      }
+      navigate('/jobs'); 
     } catch (err) {
-      const errorMsg = (err as ApiError).response?.data?.error || "Failed to post job";
+      const errorMsg = (err as ApiError).response?.data?.error || "Failed to save job";
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -129,22 +160,26 @@ export default function CreateJob() {
   return (
     <div className="max-w-3xl mx-auto py-8">
       <div className="mb-12">
-           <h1 className="text-3xl font-bold tracking-tighter text-white">Create Challenge</h1>
-           <p className="text-sm text-gray-500 mt-2 font-normal">Define a technical problem, not a job description.</p>
+           <h1 className="text-3xl font-bold tracking-tighter text-foreground">
+             {isEdit ? 'Refine Challenge' : 'Create Challenge'}
+           </h1>
+           <p className="text-sm text-gray-500 mt-2 font-normal">
+             {isEdit ? 'Updating technical specifications for high-fidelity discovery.' : 'Define a technical problem, not a job description.'}
+           </p>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-500/10 border border-red-500/20 p-4 mb-8 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-            <div className="text-sm text-red-200 font-medium">{error}</div>
+        <div className="rounded-md bg-gray-50 border border-black/10 p-4 mb-8 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2">
+            <AlertCircle className="h-5 w-5 text-black mt-0.5" />
+            <div className="text-sm text-black font-medium">{error}</div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-12">
         
         {!companyId && (
-            <div className="bg-amber-500/10 rounded-md p-6 border border-amber-500/20 flex flex-col gap-3">
-               <label className="text-sm font-bold text-amber-500 uppercase tracking-widest">Workspace Context Required</label>
+            <div className="bg-gray-50 rounded-md p-6 border border-black/10 flex flex-col gap-3">
+               <label className="text-sm font-bold text-black uppercase tracking-widest">Workspace Context Required</label>
                <input 
                  type="text" 
                  value={companyId || ''} 
@@ -153,7 +188,7 @@ export default function CreateJob() {
                  placeholder="Enter Company UUID manually"
                  autoFocus
                />
-               <p className="text-xs text-amber-500/70">Workspace ID could not be auto-detected. Please provide it to continue.</p>
+               <p className="text-xs text-gray-500">Workspace ID could not be auto-detected. Please provide it to continue.</p>
             </div>
         )}
 
@@ -162,20 +197,49 @@ export default function CreateJob() {
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">The Scope</h3>
                 
                 <div className="space-y-8 text-left">
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Technical Problem Statement</label>
+                    <div className="relative">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest">Technical Problem Statement</label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Signal Strength</span>
+                                <div className="flex gap-1 h-1.5">
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <div 
+                                            key={i} 
+                                            className={clsx(
+                                                "w-4 rounded-full transition-all duration-500",
+                                                formData.problem_statement.length > i * 40 
+                                                    ? "bg-black shadow-sm" 
+                                                    : "bg-gray-200"
+                                            )} 
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                         <textarea
                             rows={3}
-                            className="input-base min-h-[120px] py-4 text-balance leading-relaxed resize-none"
+                            className="input-base min-h-[140px] py-5 text-balance font-mono leading-relaxed resize-none focus:border-black transition-all text-lg"
                             placeholder="e.g. Scaling our distributed key-value store to handle 1M writes/sec with <5ms p99 latency."
                             value={formData.problem_statement}
                             onChange={e => setFormData({...formData, problem_statement: e.target.value})}
                             required
                         />
                         {formData.problem_statement.length > 0 && formData.problem_statement.length < 50 && (
-                            <p className="text-[10px] text-amber-500 font-bold uppercase tracking-tight mt-2 animate-pulse">
-                                Low-signal alerts. Add more technical depth to attract higher-quality matches.
-                            </p>
+                            <div className="absolute bottom-4 right-4 animate-in fade-in slide-in-from-right-4">
+                                <p className="text-[10px] text-black font-bold uppercase tracking-tight flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-black/10">
+                                    <AlertCircle size={10} />
+                                    Low-signal alerts. Add more technical depth.
+                                </p>
+                            </div>
+                        )}
+                        {formData.problem_statement.length >= 150 && (
+                            <div className="absolute bottom-4 right-4 animate-in fade-in slide-in-from-right-4">
+                                <p className="text-[10px] text-black font-bold uppercase tracking-tight flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-black/10">
+                                    <Sparkles size={10} />
+                                    High-Signal Achieved
+                                </p>
+                            </div>
                         )}
                     </div>
 
@@ -218,7 +282,7 @@ export default function CreateJob() {
                 </div>
             </div>
 
-            <div className="border-t border-gray-800 pt-10 space-y-8">
+            <div className="border-t border-gray-100 pt-10 space-y-8">
                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">Hard Signals</h3>
                 
                 <div className="text-left">
@@ -238,7 +302,7 @@ export default function CreateJob() {
                     </div>
                     <div className="flex flex-wrap gap-2.5">
                         {formData.skills_required.map(skill => (
-                            <span key={skill} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold bg-white text-black">
+                            <span key={skill} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold bg-gray-100 text-black">
                                 {skill}
                                 <button
                                     type="button"
@@ -300,7 +364,7 @@ export default function CreateJob() {
                     loading && "opacity-50 cursor-not-allowed"
                 )}
             >
-                {loading ? 'Publishing...' : 'Publish Challenge'}
+                {loading ? 'Saving...' : (isEdit ? 'Update Challenge' : 'Publish Challenge')}
             </button>
         </div>
       </form>

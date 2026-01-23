@@ -72,19 +72,19 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 selection:bg-vercel-blue selection:text-white">
+    <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center p-6 selection:bg-gray-200 selection:text-black">
         {/* Background Grid */}
-        <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40" />
+        <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-5" />
 
         <div className="w-full max-w-[480px] text-center mb-12 relative z-10">
             <motion.div 
                initial={{ opacity: 0, scale: 0.9 }}
                animate={{ opacity: 1, scale: 1 }}
-               className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white text-black mb-8 shadow-2xl shadow-white/10"
+               className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-black text-white mb-8 shadow-2xl shadow-black/10"
             >
                 <Sparkles size={24} />
             </motion.div>
-            <h2 className="text-4xl font-bold tracking-tighter mb-3">
+            <h2 className="text-4xl font-bold tracking-tighter mb-3 uppercase italic">
                 {step === 'recruiter-company' && "Establish Workspace"}
                 {step === 'recruiter-job' && "Define The Challenge"}
             </h2>
@@ -102,13 +102,13 @@ export default function Onboarding() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-6 card-base p-10 bg-[#050505]"
+                        className="space-y-6 card-base p-10 bg-white border border-gray-100 shadow-xl"
                     >
                         <div className="space-y-6 text-left">
                             <div>
                                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Company Name</label>
                                 <div className="relative">
-                                     <Briefcase size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                                     <Briefcase size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                      <input 
                                         type="text"
                                         className="input-base pl-10"
@@ -122,7 +122,7 @@ export default function Onboarding() {
                             <div>
                                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Website</label>
                                 <div className="relative">
-                                    <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                                    <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input 
                                         type="url"
                                         className="input-base pl-10"
@@ -145,7 +145,7 @@ export default function Onboarding() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-8 card-base p-10 bg-[#050505]"
+                        className="space-y-8 card-base p-10 bg-white border border-gray-100 shadow-xl"
                     >
                         <div className="space-y-6 text-left">
                             <div>
@@ -161,7 +161,7 @@ export default function Onboarding() {
                             <div>
                                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Key Technical Signals</label>
                                 <div className="relative">
-                                    <Zap size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                                    <Zap size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input 
                                         type="text"
                                         className="input-base pl-10"
@@ -170,7 +170,7 @@ export default function Onboarding() {
                                         onChange={e => setJobData({...jobData, skills: e.target.value})}
                                     />
                                 </div>
-                                <p className="text-[10px] text-gray-600 mt-2">Separate skills with commas.</p>
+                                <p className="text-[10px] text-gray-500 mt-2">Separate skills with commas.</p>
                             </div>
                         </div>
                         <button onClick={submitJob} disabled={loading} className="btn-primary w-full h-12 text-[14px] font-bold tracking-tight">
@@ -181,8 +181,8 @@ export default function Onboarding() {
             </AnimatePresence>
             
             <div className="mt-12 flex justify-center items-center gap-2">
-                <div className={clsx("w-2 h-2 rounded-full", step === 'recruiter-company' ? "bg-white" : "bg-gray-800")} />
-                <div className={clsx("w-2 h-2 rounded-full", step === 'recruiter-job' ? "bg-white" : "bg-gray-800")} />
+                <div className={clsx("w-2 h-2 rounded-full", step === 'recruiter-company' ? "bg-black" : "bg-gray-200")} />
+                <div className={clsx("w-2 h-2 rounded-full", step === 'recruiter-job' ? "bg-black" : "bg-gray-200")} />
             </div>
         </div>
     </div>
