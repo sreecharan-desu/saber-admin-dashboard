@@ -66,7 +66,7 @@ export default function Applications() {
 
   const fetchApplications = async () => {
     if (!selectedJobId || selectedJobId === 'all') return;
-    
+
     setLoading(true);
     try {
       const res = await api.get(`/candidates/jobs/${selectedJobId}/applications`);
@@ -123,7 +123,7 @@ export default function Applications() {
           <p className="text-sm text-gray-500 mt-1 font-normal">Manage candidate applications for your jobs.</p>
         </div>
         <div className="flex gap-4 items-center">
-          <button 
+          <button
             onClick={fetchApplications}
             disabled={!selectedJobId || selectedJobId === 'all'}
             className="btn-secondary h-11 w-11 p-0 flex items-center justify-center border-gray-200 disabled:opacity-50"
@@ -131,8 +131,8 @@ export default function Applications() {
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : 'text-gray-500'} />
           </button>
-          <select 
-            value={selectedJobId} 
+          <select
+            value={selectedJobId}
             onChange={(e) => setSelectedJobId(e.target.value)}
             className="input-base w-64 h-11 py-0 text-sm font-medium border-gray-200 bg-white"
           >
@@ -194,7 +194,7 @@ export default function Applications() {
               {applications.map((application) => {
                 const config = statusConfig[application.status];
                 const StatusIcon = config.icon;
-                
+
                 return (
                   <motion.div
                     key={application.id}
@@ -271,7 +271,7 @@ export default function Applications() {
 
       {/* Application Detail Modal */}
       {selectedApplication && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm p-6"
           onClick={() => setSelectedApplication(null)}
         >
@@ -351,17 +351,16 @@ export default function Applications() {
                   const config = statusConfig[status as keyof typeof statusConfig];
                   const Icon = config.icon;
                   const isCurrentStatus = selectedApplication.status === status;
-                  
+
                   return (
                     <button
                       key={status}
                       onClick={() => updateApplicationStatus(selectedApplication.id, status)}
                       disabled={updatingStatus || isCurrentStatus}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border font-bold text-sm transition-all ${
-                        isCurrentStatus
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border font-bold text-sm transition-all ${isCurrentStatus
                           ? config.color + ' opacity-50 cursor-not-allowed shadow-inner'
                           : 'bg-white border-gray-200 text-gray-500 hover:border-black hover:text-black'
-                      }`}
+                        }`}
                     >
                       <Icon size={16} />
                       {config.label}
