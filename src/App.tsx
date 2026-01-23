@@ -8,8 +8,57 @@ import CompanyProfile from "./pages/CompanyProfile";
 import CreateJob from "./pages/CreateJob";
 import MyJobs from "./pages/MyJobs";
 import Applications from "./pages/Applications";
-import Signals from "./pages/Signals";
+
 import AdminSettings from "./pages/AdminSettings";
+
+function SkeletonLoader() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Skeleton Header */}
+      <header className="h-20 border-b border-gray-50 flex items-center justify-between px-8 md:px-20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-50 rounded-xl animate-pulse" />
+          <div className="h-6 w-24 bg-gray-50 rounded-lg animate-pulse" />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gray-50 rounded-full animate-pulse" />
+          <div className="w-20 h-4 bg-gray-50 rounded-lg animate-pulse hidden md:block" />
+        </div>
+      </header>
+
+      {/* Skeleton Content */}
+      <main className="max-w-[1400px] mx-auto py-12 px-8 md:px-20 space-y-12">
+        <div className="flex justify-between items-end">
+          <div className="space-y-3">
+            <div className="h-10 w-48 bg-gray-50 rounded-xl animate-pulse" />
+            <div className="h-4 w-72 bg-gray-50 rounded-lg animate-pulse" />
+          </div>
+          <div className="h-12 w-32 bg-gray-50 rounded-2xl animate-pulse" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-[300px] rounded-[40px] border border-gray-50 bg-white p-8 space-y-6">
+              <div className="flex justify-between">
+                <div className="h-6 w-20 bg-gray-50 rounded-full animate-pulse" />
+                <div className="h-6 w-16 bg-gray-50 rounded-full animate-pulse" />
+              </div>
+              <div className="h-8 w-full bg-gray-50 rounded-xl animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-gray-50 rounded-lg animate-pulse" />
+                <div className="h-4 w-2/3 bg-gray-50 rounded-lg animate-pulse" />
+              </div>
+              <div className="pt-6 border-t border-gray-50 flex justify-between">
+                <div className="h-4 w-24 bg-gray-50 rounded-lg animate-pulse" />
+                <div className="h-10 w-10 bg-gray-50 rounded-xl animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
 
 function ProtectedRoute({
   children,
@@ -21,11 +70,7 @@ function ProtectedRoute({
   const { token, user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-saber-purple"></div>
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   if (!token) return <Navigate to="/login" replace />;
@@ -51,11 +96,7 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-saber-purple"></div>
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   if (token) return <Navigate to="/" replace />;
@@ -179,16 +220,7 @@ function AppContent() {
         }
       />
 
-      <Route
-        path="/signals"
-        element={
-          <ProtectedRoute roles={["recruiter", "admin"]}>
-            <Layout>
-              <Signals />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+
 
       <Route
         path="/admin/settings"

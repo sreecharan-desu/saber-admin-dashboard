@@ -26,8 +26,7 @@ export default function Login() {
       github: 'https://github.com/login/oauth/authorize',
       linkedin: 'https://www.linkedin.com/oauth/v2/authorization',
     }[provider];
-    
-    // Using the guide's recommendation: VITE_API_BASE_URL/auth/oauth/callback
+
     const redirect_uri = `${import.meta.env.VITE_API_BASE_URL}${REDIRECT_URI_PATH}`;
 
     const options = {
@@ -39,71 +38,94 @@ export default function Login() {
         github: 'read:user user:email',
         linkedin: 'openid profile email',
       }[provider],
-      state: provider, 
+      state: provider,
     };
-    
+
     const qs = new URLSearchParams(options).toString();
     window.location.href = `${rootUrl}?${qs}`;
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-[400px]">
-        <div className="flex justify-center mb-8">
-            <svg 
-              className="w-[40px] h-[40px]" 
-              viewBox="0 0 116 100" 
-              fill="#000" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path fillRule="evenodd" clipRule="evenodd" d="M57.5 0L115 100H0L57.5 0Z" />
-            </svg>
-        </div>
-        <h2 className="text-center text-2xl font-semibold tracking-tight text-gray-900">
-          Log in to Saber
-        </h2>
-      </div>
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-grid pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-gray-50 rounded-full blur-[120px] opacity-50" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-gray-50 rounded-full blur-[120px] opacity-50" />
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[400px]">
-        <div className="bg-white py-8 px-4 sm:px-10">
-          <div className="space-y-4">
+      <div className="relative w-full max-w-[420px] animate-in fade-in slide-in-from-bottom-2">
+        <div className="bg-white border border-gray-100 rounded-3xl p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-8 w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 transform transition-transform hover:scale-105 overflow-hidden p-2">
+              <img
+                src="/logo.png"
+                alt="Saber Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-2">
+              Welcome back to Saber
+            </h1>
+            <p className="text-gray-500 text-sm mb-10">
+              The professional edge for recruiters and builders.
+            </p>
+          </div>
+
+          <div className="space-y-3">
             <button
               onClick={() => initiateOAuth('github')}
-              className="btn-primary w-full h-10 text-[14px] flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-3 h-12 rounded-xl bg-black text-white text-sm font-semibold transition-all hover:bg-gray-800 active:scale-[0.98] shadow-sm"
             >
-              <Github size={18} />
+              <Github size={19} strokeWidth={2.5} />
               Continue with GitHub
             </button>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">or</span>
-              </div>
-            </div>
-
             <button
               onClick={() => initiateOAuth('google')}
-              className="btn-secondary w-full h-10 text-[14px] flex items-center justify-center gap-2 text-gray-600"
+              className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path d="M12.0003 20.45c4.7431 0 8.3508-3.4111 8.3508-8.2407 0-.7407-.0661-1.2721-.1946-1.7821h-8.1562v3.3444h4.7554c-.234.9922-.8431 2.3733-1.8904 3.12l-.0049.0711 2.6568 2.0621.1843.0184c1.6496-1.5173 2.6006-3.7506 2.6006-6.2716 0-.6163-.1056-1.2173-.2631-1.7821-1.3969.0435-8.2215.0232-9.6262.0232l-.1167.0051-.0052.1166c-.0273.6152-.0419 1.233-.0419 1.854 0 4.6705 3.7915 8.4619 8.4619 8.4619z" fill="currentColor"/>
+              <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c3.12 0 5.73-1.03 7.64-2.77l-3.57-2.77c-1.04.74-2.31 1.14-4.07 1.14-3.13 0-5.78-2.12-6.73-4.96H1.14v2.86C3.04 20.25 7.19 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.27 13.64c-.25-.74-.4-1.54-.4-2.36s.15-1.62.4-2.36V6.06H1.14C.41 7.59 0 9.29 0 11s.41 3.41 1.14 4.94l4.13-3.3z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 4.75c1.7 0 3.22.58 4.42 1.73l3.31-3.31C17.72 1.25 15.11 0 12 0 7.19 0 3.04 2.75 1.14 7.06l4.13 3.3c.96-2.84 3.61-4.96 6.73-4.96z"
+                  fill="#EA4335"
+                />
               </svg>
               Continue with Google
             </button>
 
             <button
               onClick={() => initiateOAuth('linkedin')}
-              className="btn-secondary w-full h-10 text-[14px] flex items-center justify-center gap-2 text-gray-600"
+              className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
             >
-               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                 <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"></path>
-               </svg>
-               Continue with LinkedIn
+              <svg className="h-5 w-5" fill="#0077b5" viewBox="0 0 24 24">
+                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"></path>
+              </svg>
+              Continue with LinkedIn
             </button>
           </div>
+
+          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col items-center">
+            <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+              We take your security seriously with enterprise-grade encryption.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center text-gray-400 text-xs">
+          © {new Date().getFullYear()} Saber Recruiting. All rights reserved.
         </div>
       </div>
     </div>
