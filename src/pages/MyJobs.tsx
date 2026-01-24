@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { api } from "../lib/api";
-import { Briefcase, Plus, RefreshCw, Pencil, Trash2, Calendar } from "lucide-react";
+import { Briefcase, Plus, RefreshCw, Pencil, Trash2, Calendar, Filter, Search, DollarSign, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 
 export default function MyJobs() {
   const queryClient = useQueryClient();
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [skillFilter, setSkillFilter] = useState("");
+  const [minSalaryFilter, setMinSalaryFilter] = useState("");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const {
     data: jobs = [],
@@ -17,7 +22,8 @@ export default function MyJobs() {
     queryKey: ["my_jobs"],
     queryFn: async () => {
       const res = await api.get("/recruiters/jobs");
-      return res.data.jobs || res.data || [];
+      const fetchedJobs = res.data.jobs || res.data || [];
+      return Array.isArray(fetchedJobs) ? [...fetchedJobs].reverse() : [];
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -56,6 +62,38 @@ export default function MyJobs() {
     }
   };
 
+  const filteredJobs = jobs.filter((job: any) => {
+    // Status Filter
+    if (filterStatus === 'active' && !job.active) return false;
+    if (filterStatus === 'inactive' && job.active) return false;
+
+    // Skill Filter
+    if (skillFilter) {
+      const skills = job.skills_required || [];
+      const hasSkill = skills.some((s: string) =>
+        s.toLowerCase().includes(skillFilter.toLowerCase())
+      );
+      if (!hasSkill) return false;
+    }
+
+    // Salary Filter
+    if (minSalaryFilter) {
+      const minSalary = Number(minSalaryFilter);
+      const jobMaxSalary = job.constraints_json?.salary_range?.[1];
+      if (!jobMaxSalary || jobMaxSalary < minSalary) return false;
+    }
+
+    return true;
+  });
+
+  const clearFilters = () => {
+    setFilterStatus('all');
+    setSkillFilter('');
+    setMinSalaryFilter('');
+  };
+
+  const activeFiltersCount = (filterStatus !== 'all' ? 1 : 0) + (skillFilter ? 1 : 0) + (minSalaryFilter ? 1 : 0);
+
   if (loading) {
     return (
       <div className="animate-in fade-in duration-500">
@@ -90,6 +128,105 @@ export default function MyJobs() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilterMenu(!showFilterMenu)}
+              className={clsx(
+                "h-12 w-12 flex items-center justify-center rounded-2xl border transition-all shadow-sm active:scale-95 cursor-pointer relative",
+                showFilterMenu || activeFiltersCount > 0
+                  ? "bg-black text-white border-black"
+                  : "bg-white border-gray-100 text-gray-400 hover:text-black hover:border-gray-200"
+              )}
+              title="Filter jobs"
+            >
+              <Filter size={18} strokeWidth={2.5} />
+              {activeFiltersCount > 0 && !showFilterMenu && (
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white" />
+              )}
+            </button>
+
+            <AnimatePresence>
+              {showFilterMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.1 }}
+                  className="absolute right-0 mt-3 w-72 bg-white border border-gray-100 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] z-20 overflow-hidden p-4"
+                >
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <span className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Filters</span>
+                    {activeFiltersCount > 0 && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-[10px] font-bold text-red-500 hover:text-red-600 flex items-center gap-1"
+                      >
+                        <X size={10} strokeWidth={3} /> Clear
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-5">
+                    {/* Status */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status</label>
+                      <div className="flex p-1 bg-gray-50 rounded-xl border border-gray-100">
+                        {['all', 'active', 'inactive'].map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => setFilterStatus(status as any)}
+                            className={clsx(
+                              "flex-1 py-1.5 text-[11px] font-bold capitalize rounded-lg transition-all",
+                              filterStatus === status ? "bg-white text-black shadow-sm" : "text-gray-400 hover:text-gray-600"
+                            )}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Skill Search */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Required Skill</label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
+                        <input
+                          type="text"
+                          value={skillFilter}
+                          onChange={(e) => setSkillFilter(e.target.value)}
+                          placeholder="e.g. React, Python"
+                          className="w-full h-9 pl-9 pr-3 rounded-xl bg-gray-50 border border-gray-100 text-xs font-medium focus:outline-none focus:border-gray-300 focus:bg-white transition-all placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Salary Min */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Min Annual Salary</label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-2.5 text-gray-400" size={12} />
+                        <input
+                          type="number"
+                          value={minSalaryFilter}
+                          onChange={(e) => setMinSalaryFilter(e.target.value)}
+                          placeholder="e.g. 120000"
+                          className="w-full h-9 pl-8 pr-3 rounded-xl bg-gray-50 border border-gray-100 text-xs font-medium focus:outline-none focus:border-gray-300 focus:bg-white transition-all placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Overlay to close menu on click outside */}
+          {showFilterMenu && (
+            <div className="fixed inset-0 z-10" onClick={() => setShowFilterMenu(false)} />
+          )}
+
           <button
             onClick={() => refetch()}
             className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-200 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
@@ -113,7 +250,7 @@ export default function MyJobs() {
         </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {filteredJobs.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -123,18 +260,22 @@ export default function MyJobs() {
             <Briefcase className="text-gray-300" size={32} strokeWidth={1.5} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-            Your board is empty
+            {filterStatus === 'all' ? 'Your board is empty' : 'No matching jobs found'}
           </h2>
           <p className="text-gray-500 max-w-sm mx-auto font-medium leading-relaxed mb-10">
-            Start scouting for top-tier talent by publishing your first technical challenge.
+            {filterStatus === 'all'
+              ? "Start scouting for top-tier talent by publishing your first technical challenge."
+              : "Try adjusting your filters to see more results."}
           </p>
-          <Link to="/jobs/new" className="h-12 px-10 rounded-2xl bg-black text-white font-bold flex items-center gap-2 hover:bg-gray-800 transition-all shadow-xl shadow-black/10">
-            Launch First Challenge
-          </Link>
+          {filterStatus === 'all' && (
+            <Link to="/jobs/new" className="h-12 px-10 rounded-2xl bg-black text-white font-bold flex items-center gap-2 hover:bg-gray-800 transition-all shadow-xl shadow-black/10">
+              Launch First Challenge
+            </Link>
+          )}
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {jobs.map((job: any, idx: number) => (
+          {filteredJobs.map((job: any, idx: number) => (
             <motion.div
               key={job.id}
               initial={{ opacity: 0, y: 20 }}

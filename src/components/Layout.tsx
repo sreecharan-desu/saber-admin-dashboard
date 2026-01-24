@@ -2,7 +2,6 @@ import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import clsx from "clsx";
 import {
-  Bell,
   Menu,
   LogOut,
   User as UserIcon,
@@ -20,7 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   if (!user) return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans selection:bg-gray-200 selection:text-black">
+    <div className="min-h-screen bg-white text-black font-sans selection:bg-gray-200 selection:text-black flex flex-col">
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-5" />
 
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.02)]">
@@ -38,40 +37,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </h1>
             </Link>
 
-            <div className="h-6 w-[1px] bg-gray-100" />
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-8 h-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-[11px] font-bold overflow-hidden text-black shadow-sm">
-                  {user.photo_url ? (
-                    <img
-                      src={user.photo_url}
-                      className="w-full h-full object-cover"
-                      alt=""
-                    />
-                  ) : (
-                    user.name.charAt(0)
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-[13px] text-gray-900 leading-none mb-1">
-                  {user.name}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] uppercase tracking-widest font-extrabold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100/50">
-                    {user.role}
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="text-gray-400 hover:text-black transition-all p-2.5 rounded-xl hover:bg-gray-50 relative">
-              <Bell size={20} strokeWidth={2} />
-              <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-black rounded-full border border-white" />
-            </button>
+
 
             <div className="h-6 w-[1px] bg-gray-100 mx-2" />
 
@@ -151,9 +121,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="wrapper py-10 relative z-10">{children}</main>
+      <main className="wrapper py-10 relative z-10 flex-1">{children}</main>
 
-      <footer className="wrapper border-t border-gray-100 mt-32 py-16 text-xs text-gray-400 font-bold flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+      <footer className="wrapper border-t border-gray-100 mt-auto py-12 text-xs text-gray-400 font-bold flex flex-col justify-center items-center gap-4 relative z-10">
         <div className="flex items-center gap-3 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
           <img src="/saber-logo.png" className="w-5 h-5 object-contain" alt="Saber Mark" />
           <span className="uppercase tracking-[0.2em] text-black">
@@ -163,17 +133,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </span>
           </span>
         </div>
-        <div className="flex items-center gap-10 tracking-widest uppercase text-[9px] text-gray-400">
-          <a href="#" className="hover:text-black transition-colors">
-            Infra Protocol
-          </a>
-          <a href="#" className="hover:text-black transition-colors">
-            Neural Telemetry
-          </a>
-          <a href="#" className="hover:text-black transition-colors">
-            Support Matrix
-          </a>
-        </div>
+        <span className="text-gray-400">Made with <span className="text-red-500">❤️</span> by Stark Protocol S4</span>
       </footer>
       <NavigationDock />
     </div>
