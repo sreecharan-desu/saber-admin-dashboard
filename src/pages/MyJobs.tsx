@@ -1,5 +1,5 @@
 import { api } from "../lib/api";
-import { Briefcase, Plus, RefreshCw, Pencil, Trash2, Calendar, Target } from "lucide-react";
+import { Briefcase, Plus, RefreshCw, Pencil, Trash2, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

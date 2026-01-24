@@ -8,6 +8,7 @@ import CompanyProfile from "./pages/CompanyProfile";
 import CreateJob from "./pages/CreateJob";
 import MyJobs from "./pages/MyJobs";
 import Applications from "./pages/Applications";
+import Dashboard from "./pages/Dashboard";
 
 import AdminSettings from "./pages/AdminSettings";
 
@@ -162,8 +163,19 @@ function AppContent() {
         }
       />
 
-      {/* Default redirect to jobs */}
-      <Route path="/" element={<Navigate to="/jobs" replace />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute roles={["recruiter", "admin"]}>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Default redirect to Dashboard */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       <Route
         path="/company"
