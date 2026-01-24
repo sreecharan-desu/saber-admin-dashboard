@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Briefcase, Eye, Users, CheckCircle2, TrendingUp } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Briefcase, Eye, Users, CheckCircle2 } from 'lucide-react';
 
 interface RecruiterAnalytics {
     active_jobs: number;
@@ -14,6 +14,16 @@ interface RecruiterAnalytics {
     }>;
 }
 
+const ORDERED_STATUSES = ['pending', 'reviewing', 'interview', 'accepted', 'rejected'];
+
+const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
+    pending: { color: '#71717a', label: 'Pending' }, // zinc-500
+    reviewing: { color: '#3b82f6', label: 'Reviewing' }, // blue-500
+    interview: { color: '#a855f7', label: 'Interview' }, // purple-500
+    accepted: { color: '#10b981', label: 'Accepted' }, // emerald-500
+    rejected: { color: '#ef4444', label: 'Rejected' }, // red-500
+};
+
 const Dashboard = () => {
     const [analytics, setAnalytics] = useState<RecruiterAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
@@ -25,7 +35,13 @@ const Dashboard = () => {
     const fetchAnalytics = async () => {
         try {
             const { data } = await api.get<RecruiterAnalytics>('/analytics/recruiter');
-            setAnalytics(data);
+
+            // Sort pipeline data logically
+            const sortedPipeline = [...data.pipeline].sort((a, b) => {
+                return ORDERED_STATUSES.indexOf(a.status) - ORDERED_STATUSES.indexOf(b.status);
+            });
+
+            setAnalytics({ ...data, pipeline: sortedPipeline });
         } catch (error) {
             console.error("Failed to fetch analytics:", error);
         } finally {
@@ -42,10 +58,7 @@ const Dashboard = () => {
                         <div key={i} className="h-32 bg-gray-100 rounded-2xl border border-gray-200/50"></div>
                     ))}
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 h-96 bg-gray-100 rounded-2xl border border-gray-200/50"></div>
-                    <div className="h-96 bg-gray-100 rounded-2xl border border-gray-200/50"></div>
-                </div>
+                <div className="h-96 bg-gray-100 rounded-2xl border border-gray-200/50"></div>
             </div>
         );
     }
@@ -54,9 +67,8 @@ const Dashboard = () => {
         <div className="p-8 text-center text-gray-500">Failed to load data.</div>
     );
 
-    const conversionRate = analytics.total_views > 0
-        ? ((analytics.total_applications / analytics.total_views) * 100).toFixed(1)
-        : '0';
+    // Calculate total for header
+    const totalPipeline = analytics.pipeline.reduce((acc, curr) => acc + curr.count, 0);
 
     return (
         <div className="p-8 space-y-8 max-w-7xl mx-auto">
@@ -82,7 +94,7 @@ const Dashboard = () => {
                     bg="bg-purple-50"
                 />
                 <StatCard
-                    title="Applications"
+                    title="Total Applications"
                     value={analytics.total_applications}
                     icon={Users}
                     color="text-indigo-600"
@@ -97,83 +109,67 @@ const Dashboard = () => {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Hiring Funnel Chart */}
-                <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900">Hiring Funnel</h3>
-                            <p className="text-sm text-gray-500">Candidate status distribution</p>
-                        </div>
+            {/* Pipeline Pie Chart */}
+            <div className="w-full bg-white border border-gray-200 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+                <div className="flex items-center justify-between mb-2 relative z-10">
+                    <div>
+                        <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Application Pipeline</h3>
+                        <p className="text-sm text-gray-500 mt-1 font-medium">Breakdown by current status</p>
                     </div>
-                    <div className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={analytics.pipeline} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
-                                <XAxis
-                                    dataKey="status"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#6B7280', fontSize: 13, fontWeight: 500 }}
-                                    dy={16}
-                                    tickFormatter={(val) => val.charAt(0).toUpperCase() + val.slice(1)}
-                                />
-                                <YAxis hide />
-                                <Tooltip
-                                    cursor={{ fill: '#F9FAFB' }}
-                                    contentStyle={{
-                                        borderRadius: '12px',
-                                        border: '1px solid #E5E7EB',
-                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                        padding: '12px'
-                                    }}
-                                />
-                                <Bar dataKey="count" radius={[8, 8, 8, 8]} barSize={60}>
-                                    {analytics.pipeline.map((entry, index) => {
-                                        let fill = '#3B82F6';
-                                        if (entry.status === 'pending') fill = '#9CA3AF'; // Gray
-                                        if (entry.status === 'reviewing') fill = '#3B82F6'; // Blue
-                                        if (entry.status === 'interview') fill = '#8B5CF6'; // Purple
-                                        if (entry.status === 'accepted') fill = '#10B981'; // Green
-                                        return <Cell key={`cell-${index}`} fill={fill} />;
-                                    })}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-200">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs font-bold text-gray-600">
+                            {totalPipeline} Candidates
+                        </span>
                     </div>
                 </div>
 
-                {/* Conversion Rate Card */}
-                <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-amber-50 rounded-xl text-amber-600 border border-amber-100">
-                                <TrendingUp className="w-5 h-5" />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-900">Conversion Rate</h3>
-                        </div>
-                        <p className="text-gray-500 text-sm leading-relaxed">Percentage of viewers who applied to your active jobs.</p>
-                    </div>
-
-                    <div className="py-8 text-center relative">
-                        <span className="text-6xl font-black text-gray-900 tracking-tighter">
-                            {conversionRate}
-                            <span className="text-2xl text-gray-400 ml-1 font-bold">%</span>
-                        </span>
-                    </div>
-
-                    <div className="space-y-3">
-                        <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${Math.min(parseFloat(conversionRate), 100)}%` }}
+                <div className="h-[400px] w-full relative z-10">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={analytics.pipeline}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={100}
+                                outerRadius={140}
+                                paddingAngle={5}
+                                dataKey="count"
+                                nameKey="status"
+                                stroke="none"
+                            >
+                                {analytics.pipeline.map((entry, index) => (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={STATUS_CONFIG[entry.status]?.color || '#3b82f6'}
+                                    />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '12px',
+                                    color: '#000',
+                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                                }}
+                                itemStyle={{ color: '#000' }}
+                                formatter={(value: any, name: any, props: any) => {
+                                    return [value, STATUS_CONFIG[props.payload.status]?.label || name];
+                                }}
                             />
-                        </div>
-                        <div className="flex justify-between text-xs font-medium text-gray-400">
-                            <span>0%</span>
-                            <span>50%</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
+                            <Legend
+                                verticalAlign="bottom"
+                                height={36}
+                                iconType="circle"
+                                formatter={(value) => (
+                                    <span className="text-gray-600 font-medium ml-1">
+                                        {STATUS_CONFIG[value]?.label || value}
+                                    </span>
+                                )}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
         </div>
