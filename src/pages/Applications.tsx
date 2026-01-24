@@ -126,10 +126,10 @@ export default function Applications() {
           <button
             onClick={fetchApplications}
             disabled={!selectedJobId || selectedJobId === 'all'}
-            className="btn-secondary h-11 w-11 p-0 flex items-center justify-center border-gray-200 disabled:opacity-50"
+            className="h-11 w-11 flex items-center justify-center rounded-2xl bg-white border border-gray-200 text-gray-400 hover:text-black hover:border-gray-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
             title="Refresh Applications"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : 'text-gray-500'} />
+            <RefreshCw size={18} strokeWidth={2.5} className={loading ? 'animate-spin text-black' : ''} />
           </button>
           <select
             value={selectedJobId}
@@ -358,8 +358,8 @@ export default function Applications() {
                       onClick={() => updateApplicationStatus(selectedApplication.id, status)}
                       disabled={updatingStatus || isCurrentStatus}
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border font-bold text-sm transition-all ${isCurrentStatus
-                          ? config.color + ' opacity-50 cursor-not-allowed shadow-inner'
-                          : 'bg-white border-gray-200 text-gray-500 hover:border-black hover:text-black'
+                        ? config.color + ' opacity-50 cursor-not-allowed shadow-inner'
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-black hover:text-black'
                         }`}
                     >
                       <Icon size={16} />
