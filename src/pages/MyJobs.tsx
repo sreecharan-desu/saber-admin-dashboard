@@ -92,7 +92,7 @@ export default function MyJobs() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => refetch()}
-            className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-200 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-200 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
             title="Refresh database"
             disabled={isRefetching}
           >

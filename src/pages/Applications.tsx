@@ -126,7 +126,7 @@ export default function Applications() {
           <button
             onClick={fetchApplications}
             disabled={!selectedJobId || selectedJobId === 'all'}
-            className="h-11 w-11 flex items-center justify-center rounded-2xl bg-white border border-gray-200 text-gray-400 hover:text-black hover:border-gray-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+            className="h-11 cursor-pointer w-15 flex items-center justify-center rounded-2xl bg-white border border-gray-200 text-gray-400 hover:text-black hover:border-gray-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-50"
             title="Refresh Applications"
           >
             <RefreshCw size={18} strokeWidth={2.5} className={loading ? 'animate-spin text-black' : ''} />
