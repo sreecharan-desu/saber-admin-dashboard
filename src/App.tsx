@@ -10,6 +10,7 @@ import MyJobs from "./pages/MyJobs";
 import Applications from "./pages/Applications";
 import Dashboard from "./pages/Dashboard";
 
+import Landing from "./pages/Landing";
 import AdminSettings from "./pages/AdminSettings";
 
 function SkeletonLoader() {
@@ -100,7 +101,7 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
     return <SkeletonLoader />;
   }
 
-  if (token) return <Navigate to="/" replace />;
+  if (token) return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
 }
@@ -174,8 +175,15 @@ function AppContent() {
         }
       />
 
-      {/* Default redirect to Dashboard */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* Landing Page Route */}
+      <Route
+        path="/"
+        element={
+          <GuestRoute>
+            <Landing />
+          </GuestRoute>
+        }
+      />
 
       <Route
         path="/company"
