@@ -57,8 +57,8 @@ export default function Login() {
           <div className="flex flex-col items-center text-center">
             <div className="mb-8 w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 transform transition-transform hover:scale-105 overflow-hidden p-2">
               <img
-                src="/logo.png"
-                alt="Saber Logo"
+                src="/logo1.png"
+                alt="Saber App Logo"
                 className="w-full h-full object-contain"
               />
             </div>

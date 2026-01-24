@@ -99,7 +99,7 @@ export default function CompanyProfile() {
                 <button
                     onClick={() => refetch()}
                     disabled={fetching}
-                    className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-200 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                    className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-200 transition-all shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
                     title="Sync from engine"
                 >
                     <RefreshCw size={18} strokeWidth={2.5} className={fetching ? 'animate-spin' : ''} />

@@ -11,26 +11,7 @@ import {
 import { useState } from "react";
 import { NavigationDock } from "./NavigationDock";
 
-const BrandMark = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12 2L4.5 9L12 16L19.5 9L12 2Z"
-      fill="currentColor"
-      className="text-black"
-    />
-    <path
-      d="M12 22L4.5 15L12 8L19.5 15L12 22Z"
-      fill="currentColor"
-      fillOpacity="0.3"
-      className="text-black"
-    />
-  </svg>
-);
+
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -50,7 +31,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-3.5 group transition-all"
             >
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm transition-transform group-hover:scale-105 p-1.5 overflow-hidden">
-                <img src="/logo.png" alt="Saber Logo" className="w-full h-full object-contain" />
+                <img src="/saber-logo.png" alt="Saber Logo" className="w-full h-full object-contain" />
               </div>
               <h1 className="font-outfit font-extrabold text-2xl tracking-tighter text-gray-900 group-hover:text-black transition-colors">
                 SABER
@@ -174,7 +155,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <footer className="wrapper border-t border-gray-100 mt-32 py-16 text-xs text-gray-400 font-bold flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
         <div className="flex items-center gap-3 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
-          <BrandMark className="w-5 h-5 text-black" />
+          <img src="/saber-logo.png" className="w-5 h-5 object-contain" alt="Saber Mark" />
           <span className="uppercase tracking-[0.2em] text-black">
             SABER{" "}
             <span className="text-[10px] font-normal tracking-normal lowercase italic text-gray-400">

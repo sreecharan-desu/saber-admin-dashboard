@@ -1,8 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Users, Building2 } from "lucide-react";
+import { Briefcase, Users, Building2, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 
 const navItems = [
+    {
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+    },
     {
         label: "Jobs",
         href: "/jobs",
