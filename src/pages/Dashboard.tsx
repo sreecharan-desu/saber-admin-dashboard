@@ -51,14 +51,34 @@ const Dashboard = () => {
 
     if (loading) {
         return (
-            <div className="p-8 space-y-8 animate-pulse max-w-7xl mx-auto">
-                <div className="h-8 w-48 bg-gray-100 rounded-lg"></div>
+            <div className="p-8 space-y-8 animate-pulse max-w-[1600px] mx-auto">
+                <div className="space-y-2">
+                    <div className="h-8 w-48 bg-gray-100 rounded-lg"></div>
+                    <div className="h-4 w-64 bg-gray-50 rounded-lg"></div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-32 bg-gray-100 rounded-2xl border border-gray-200/50"></div>
+                        <div key={i} className="h-32 bg-white border border-gray-100 rounded-2xl p-6 flex items-start justify-between">
+                            <div className="space-y-3">
+                                <div className="h-4 w-24 bg-gray-100 rounded"></div>
+                                <div className="h-8 w-16 bg-gray-100 rounded"></div>
+                            </div>
+                            <div className="h-12 w-12 bg-gray-50 rounded-2xl"></div>
+                        </div>
                     ))}
                 </div>
-                <div className="h-96 bg-gray-100 rounded-2xl border border-gray-200/50"></div>
+
+                <div className="h-[500px] bg-white rounded-3xl border border-gray-200 p-8 space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div className="space-y-2">
+                            <div className="h-8 w-48 bg-gray-100 rounded-lg"></div>
+                            <div className="h-4 w-32 bg-gray-50 rounded-lg"></div>
+                        </div>
+                        <div className="h-8 w-32 bg-gray-50 rounded-full"></div>
+                    </div>
+                    <div className="h-[350px] w-full bg-gray-50 rounded-full opacity-50 mx-auto max-w-md"></div>
+                </div>
             </div>
         );
     }
@@ -71,7 +91,7 @@ const Dashboard = () => {
     const totalPipeline = analytics.pipeline.reduce((acc, curr) => acc + curr.count, 0);
 
     return (
-        <div className="p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
             <header>
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
                 <p className="text-gray-500 mt-1">Overview of your recruitment performance</p>

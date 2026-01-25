@@ -1,25 +1,47 @@
+import { MaskContainer } from "@/components/ui/svg-mask-effect";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 
 export default function CallToAction() {
     return (
-        <section className="py-24 bg-black relative overflow-hidden">
-            <div className="max-w-5xl mx-auto px-6 relative z-10 text-center">
-                <div className="bg-[#111] rounded-[40px] p-12 md:p-20 text-white border border-white/10 shadow-2xl shadow-black/50 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-[120px] opacity-[0.03] -translate-y-1/2 translate-x-1/2 group-hover:opacity-[0.05] transition-opacity" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-[120px] opacity-[0.03] translate-y-1/2 -translate-x-1/2 group-hover:opacity-[0.05] transition-opacity" />
-
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight relative z-10">Start building your dream team.</h2>
-                    <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto relative z-10">Join thousands of forward-thinking companies using Saber to redefine their recruitment strategy today.</p>
-
+        <section className="relative w-full bg-slate-50">
+            <MaskContainer
+                revealText={
+                    <div className="flex flex-col items-center justify-center text-center p-6 h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+                        <h2 className="text-4xl md:text-6xl font-extrabold mb-4 tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-slate-900 via-slate-600 to-slate-400">
+                            Ready to <span className="text-slate-900">scale?</span>
+                        </h2>
+                        <p className="text-lg md:text-xl text-slate-500 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
+                            Your hiring deserves a system that works as hard as you do.
+                            <br />
+                            <span className="text-sm font-semibold uppercase tracking-widest mt-6 flex items-center justify-center gap-2 text-slate-400">
+                                <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse" />
+                                Hover to reveal
+                            </span>
+                        </p>
+                        <div className="px-6 py-3 rounded-full border border-dashed border-slate-300 text-slate-400 text-sm font-medium tracking-wide">
+                            saber.co/start
+                        </div>
+                    </div>
+                }
+                className="h-[25rem] rounded-none bg-slate-50"
+                revealSize={600}
+            >
+                <div className="flex flex-col items-center justify-center text-center p-6 h-full w-full">
+                    <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tighter drop-shadow-2xl">
+                        Start <span className="text-blue-300">Hiring.</span>
+                    </h2>
+                    <p className="text-lg md:text-xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed font-medium">
+                        Join 5,000+ companies modernizing their hiring stack today.
+                    </p>
                     <Link
                         to="/login"
-                        className="inline-flex h-14 px-8 items-center justify-center gap-2 rounded-full bg-white text-black font-bold text-lg hover:bg-gray-200 transition-all active:scale-95 relative z-10"
+                        className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-blue-700 rounded-full font-bold text-lg shadow-[0_0_40px_-10px_rgba(255,255,255,0.5)] hover:bg-black hover:text-white hover:scale-105 transition-all"
                     >
-                        Get Started Now <ArrowRight size={20} />
+                        Get Started Free
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-5 h-5"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                     </Link>
                 </div>
-            </div>
+            </MaskContainer>
         </section>
     );
 }

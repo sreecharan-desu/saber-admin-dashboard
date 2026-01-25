@@ -1,6 +1,6 @@
-import { Github } from 'lucide-react';
+import { Github, ChevronLeft } from 'lucide-react';
 import { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 
 const REDIRECT_URI_PATH = '/auth/oauth/callback';
 
@@ -51,6 +51,14 @@ export default function Login() {
       <div className="absolute inset-0 bg-grid pointer-events-none" />
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-gray-50 rounded-full blur-[120px] opacity-50" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-gray-50 rounded-full blur-[120px] opacity-50" />
+
+      {/* Back to Home */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 p-2 rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all z-10"
+      >
+        <ChevronLeft size={24} />
+      </Link>
 
       <div className="relative w-full max-w-[420px] animate-in fade-in slide-in-from-bottom-2">
         <div className="bg-white border border-gray-100 rounded-3xl p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
