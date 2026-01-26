@@ -87,7 +87,7 @@ const VideoSection = () => {
         className="w-full max-w-[1400px] will-change-transform"
       >
         <VideoPlayer
-          src="https://res.cloudinary.com/dy2fjgt46/video/upload/v1769352347/videoplayback_m5ujxf.mp4"
+          src="https://drive.google.com/file/d/1wlyKtv9BOaXuoXI2y2bfgY8PGny1ROR4/view?usp=drivesdk"
           className="w-full"
         />
       </div>
