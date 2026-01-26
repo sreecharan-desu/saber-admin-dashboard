@@ -116,7 +116,7 @@ export default function MyJobs() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 font-outfit">

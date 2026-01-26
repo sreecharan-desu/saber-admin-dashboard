@@ -22,39 +22,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-white text-black font-sans selection:bg-gray-200 selection:text-black flex flex-col">
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-5" />
 
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.02)]">
-        <div className="wrapper h-20 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100/50 shadow-sm">
+        <div className="wrapper h-[72px] flex items-center justify-between px-8">
           <div className="flex items-center gap-6">
             <Link
               to="/"
-              className="flex items-center gap-3.5 group transition-all"
+              className="flex items-center gap-3 group transition-all"
             >
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm transition-transform group-hover:scale-105 p-1.5 overflow-hidden">
+              <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)] p-2">
                 <img src="/saber-logo.png" alt="Saber Logo" className="w-full h-full object-contain" />
               </div>
-              <h1 className="font-outfit font-extrabold text-2xl tracking-tighter text-gray-900 group-hover:text-black transition-colors">
+              <h1 className="font-outfit font-bold text-xl tracking-tight text-slate-900">
                 SABER
               </h1>
             </Link>
-
-
           </div>
 
           <div className="flex items-center gap-2">
-
-
-            <div className="h-6 w-[1px] bg-gray-100 mx-2" />
-
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className={clsx(
-                  "flex items-center gap-2 p-1.5 rounded-2xl transition-all",
-                  userMenuOpen ? "bg-gray-50 text-black" : "text-gray-400 hover:text-black hover:bg-gray-50"
-                )}
+                className="flex items-center gap-3 outline-none group"
                 onBlur={() => setTimeout(() => setUserMenuOpen(false), 200)}
               >
-                <div className="w-9 h-9 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shadow-sm">
+                <div className="w-9 h-9 rounded-[14px] bg-slate-900 border border-slate-900 overflow-hidden shadow-sm flex items-center justify-center transition-transform group-active:scale-95 text-white">
                   {user.photo_url ? (
                     <img
                       src={user.photo_url}
@@ -62,24 +53,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       alt=""
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-bold uppercase">
+                    <div className="text-xs font-bold uppercase">
                       {user.name.charAt(0)}
                     </div>
                   )}
                 </div>
                 <ChevronDown
-                  size={16}
-                  strokeWidth={2.5}
+                  size={14}
+                  strokeWidth={3}
                   className={clsx(
-                    "transition-transform mr-1",
-                    userMenuOpen && "rotate-180",
+                    "text-gray-400 transition-all duration-300",
+                    userMenuOpen ? "rotate-180 text-black" : "group-hover:text-gray-600"
                   )}
                 />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-100 rounded-[28px] shadow-[0_10px_40px_rgba(0,0,0,0.08)] z-50 py-2 animate-in fade-in slide-in-from-top-2 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/30">
+                <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-100 rounded-[24px] shadow-[0_10px_40px_rgba(0,0,0,0.08)] z-50 py-2 animate-in fade-in slide-in-from-top-2 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-50 bg-slate-50/50">
                     <p className="text-[14px] font-bold text-gray-900 tracking-tight">
                       {user.name}
                     </p>
@@ -121,7 +112,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="wrapper py-10 relative z-10 flex-1">{children}</main>
+      <main className="ml-30 mr-10 max-w-[1600px] py-10 relative z-10 flex-1">{children}</main>
 
       <footer className="wrapper border-t border-gray-100 mt-auto py-12 text-xs text-gray-400 font-bold flex flex-col justify-center items-center gap-4 relative z-10">
         <div className="flex items-center gap-3 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
